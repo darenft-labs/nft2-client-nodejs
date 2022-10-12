@@ -1,11 +1,19 @@
 {
-  "name": "nft2-sdk",
-  "version": "8.5.2",
+  "name": "nft2-client",
+  "version": "1.0.0",
   "author": "DareNFT",
   "description": "NFT2 Client Library for Node.js",
   "engines": {
     "node": ">=12"
   },
+  "repository": "darenft-labs/nft2-client-nodejs",
+  "keywords": [
+    "darenft",
+    "sdk",
+    "nft2",
+    "client",
+    "client library"
+  ],
   "main": "./build/src/index.js",
   "types": "./build/src/index.d.ts",
   "dependencies": {
@@ -54,5 +62,5 @@
     "precompile": "gts clean",
     "ts-node": "npx ts-node"
   },
-  "license": ""
+  "license": "MIT"
 }
