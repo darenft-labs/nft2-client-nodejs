@@ -1,5 +1,5 @@
 {
-  "name": "@dare-nft/nft2-client",
+  "name": "@darenft2/nft2-client",
   "version": "1.0.0",
   "author": "DareNFT",
   "description": "NFT2 Client Library for Node.js",
