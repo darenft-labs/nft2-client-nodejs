@@ -2,20 +2,20 @@
 
 This is DareNFT 2.0 Protocol's officially supported node.js client library.
 
-[![License](https://img.shields.io/npm/l/@cosmostation/cosmosjs.svg)](https://www.npmjs.com/package/@darenft2/nft2-client)
+[![License](https://img.shields.io/npm/l/@cosmostation/cosmosjs.svg)](https://www.npmjs.com/package/@darenft/nft2-client)
 
 ## Quick start
 
 Install the sdk
 
 ```
-yarn add @darenft2/nft2-client
+yarn add @darenft/nft2-client
 ```
 
 Update nft metadata
 
 ```js
-const {ProtocolClient} = require('@darenft2/nft2-client');
+const {ProtocolClient} = require('@darenft/nft2-client');
 const {ethers} = require('ethers');
 require('dotenv').config();
 
@@ -62,7 +62,7 @@ main().catch(console.error);
 Get NFT detail
 
 ```js
-const {ProtocolClient} = require('@darenft2/nft2-client');
+const {ProtocolClient} = require('@darenft/nft2-client');
 require('dotenv').config();
 
 async function main() {
