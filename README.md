@@ -2,7 +2,7 @@
 
 This is DareNFT 2.0 Protocol's officially supported node.js client library.
 
-[![License]](https://www.npmjs.com/package/@darenft2/nft2-client)
+[![License](https://img.shields.io/npm/l/@cosmostation/cosmosjs.svg)](https://www.npmjs.com/package/@darenft2/nft2-client)
 
 ## Quick start
 
