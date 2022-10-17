@@ -34,11 +34,6 @@ export interface CredentialsClient {
   request<T>(opts: GaxiosOptions): GaxiosPromise<T>;
 
   /**
-   * Sets the auth credentials.
-   */
-  setCredentials(credentials: Credentials): void;
-
-  /**
    * Subscribes a listener to the tokens event triggered when a token is
    * generated.
    *
@@ -82,13 +77,6 @@ export abstract class AuthClient
   //   token?: string | null;
   //   res?: GaxiosResponse | null;
   // }>;
-
-  /**
-   * Sets the auth credentials.
-   */
-  setCredentials(credentials: Credentials) {
-    this.credentials = credentials;
-  }
 
   /**
    * Append additional headers, e.g., shared across the

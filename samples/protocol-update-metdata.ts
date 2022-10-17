@@ -22,7 +22,7 @@ async function main() {
     )
   )?.schema;
 
-  console.log(schema);
+  console.log(JSON.stringify(schema));
 
   const nftAddr = '0xd3524648ec627fb28216ebd2424ccbecafb6f9c9';
   const tokenId = '1';

@@ -5,6 +5,7 @@ import {
   GaxiosResponse,
 } from 'gaxios';
 import * as _ from 'lodash';
+import jwt from 'jsonwebtoken';
 
 import {BodyResponseCallback} from '../transporters';
 import {AuthClient, AuthClientOptions} from './authclient';
@@ -22,7 +23,7 @@ import {TokenPayload} from './loginticket';
 export class OAuth2Client extends AuthClient {
   protected refreshTokenPromises = new Map<string, Promise<GetTokenResponse>>();
 
-  apiKey?: string;
+  apiKey: string;
 
   tokenType: string;
 
@@ -89,26 +90,48 @@ export class OAuth2Client extends AuthClient {
    * @private
    */
   async refreshToken(refreshToken?: string | null): Promise<GetTokenResponse> {
-    if (!refreshToken) {
-      return this.refreshTokenNoCache(refreshToken);
-    }
+    const rfKey = refreshToken || 'NONE_RFTOKEN';
+
     // If a request to refresh using the same token has started,
     // return the same promise.
-    if (this.refreshTokenPromises.has(refreshToken)) {
-      return this.refreshTokenPromises.get(refreshToken)!;
+    if (this.refreshTokenPromises.has(rfKey)) {
+      return this.refreshTokenPromises.get(rfKey)!;
     }
 
-    const p = this.refreshTokenNoCache(refreshToken).then(
-      r => {
-        this.refreshTokenPromises.delete(refreshToken);
-        return r;
-      },
-      e => {
-        this.refreshTokenPromises.delete(refreshToken);
-        throw e;
+    let p: Promise<GetTokenResponse> | undefined;
+    if (!refreshToken) {
+      if (!this.apiKey) {
+        throw new Error('No API key found');
       }
-    );
-    this.refreshTokenPromises.set(refreshToken, p);
+
+      p = this.getToken(this.apiKey)?.then(
+        r => {
+          this.refreshTokenPromises.delete(rfKey);
+          return r;
+        },
+        e => {
+          this.refreshTokenPromises.delete(rfKey);
+          throw e;
+        }
+      );
+    } else {
+      p = this.refreshTokenNoCache(refreshToken).then(
+        r => {
+          this.refreshTokenPromises.delete(rfKey);
+          return r;
+        },
+        e => {
+          this.refreshTokenPromises.delete(rfKey);
+          throw e;
+        }
+      );
+    }
+
+    if (!p) {
+      throw new Error('No callback from promise');
+    }
+
+    this.refreshTokenPromises.set(rfKey, p);
     return p;
   }
 
@@ -191,19 +214,10 @@ export class OAuth2Client extends AuthClient {
 
     let r: GetTokenResponse | null = null;
     let tokens: Credentials | null = null;
+
     try {
-      if (_.isEmpty(thisCreds)) {
-        r = await this.getToken(this.apiKey);
-
-        if (!r) {
-          throw Error('No response from server');
-        }
-
-        tokens = r.tokens;
-      } else {
-        r = await this.refreshToken(thisCreds.refreshToken);
-        tokens = r.tokens;
-      }
+      r = await this.refreshToken(thisCreds.refreshToken);
+      tokens = r.tokens;
     } catch (err) {
       const e = err as GaxiosError;
       if (
@@ -277,7 +291,6 @@ export class OAuth2Client extends AuthClient {
         // Retry the request for metadata if the following criteria are true:
         // - We haven't already retried.  It only makes sense to retry once.
         // - The response was a 401 or a 403
-        // - The request didn't send a readableStream
         // - An accessToken and refreshToken were available, but either no
         //   expiresIn was available or the forceRefreshOnFailure flag is set.
         //   The absent expiresIn case can happen when developers stash the
@@ -288,7 +301,6 @@ export class OAuth2Client extends AuthClient {
         // Or the following criteria are true:
         // - We haven't already retried.  It only makes sense to retry once.
         // - The response was a 401 or a 403
-        // - The request didn't send a readableStream
         // - No refreshToken was available
         // - An accessToken, but
         //   either no expiresIn was available or the forceRefreshOnFailure
@@ -300,11 +312,13 @@ export class OAuth2Client extends AuthClient {
           this.credentials &&
           this.credentials.accessToken &&
           this.credentials.refreshToken &&
-          (!this.credentials.expiresIn || this.forceRefreshOnFailure);
+          this.forceRefreshOnFailure;
 
-        const isAuthErr = statusCode === 401 || statusCode === 403;
+        const isAuthErr = statusCode === 401;
+
         if (!retry && isAuthErr && mayRequireRefresh) {
           await this.refreshAccessTokenAsync();
+
           return this.requestAsync<T>(opts, true);
         }
       }
@@ -332,5 +346,15 @@ export class OAuth2Client extends AuthClient {
     const timeout = this.getCurrentTime() + this.eagerRefreshThreshold;
 
     return expiryDate ? expiryDate <= timeout : false;
+  }
+
+  getAccount(): TokenPayload {
+    if (!this.credentials?.accessToken) {
+      throw new Error('Access token not found');
+    }
+    const decodedToken = jwt.decode(
+      this.credentials?.accessToken
+    ) as jwt.JwtPayload;
+    return decodedToken as TokenPayload;
   }
 }

@@ -12,7 +12,7 @@ export interface Credentials {
   /**
    * A token that can be sent to a NFT2 API.
    */
-  accessToken: string;
+  accessToken?: string;
 }
 
 export interface CredentialRequest {
