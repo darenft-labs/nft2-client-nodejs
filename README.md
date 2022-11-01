@@ -59,6 +59,54 @@ async function main() {
 main().catch(console.error);
 ```
 
+Calling from web3 client after get `update` object
+
+Keymanager address (BSC testnet): `0x4265c3fC37973ee042F3A9849d99B32C71964CBC`
+
+Calling function via
+
+```
+{
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "rootSignature",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "signatures",
+        "type": "bytes[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "nonces",
+        "type": "uint256[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "target",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IAggregatable.Call[]",
+        "name": "calls",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "aggregateRelayCall",
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+```
+
 Get NFT detail
 
 ```js
@@ -104,4 +152,16 @@ Run 1 sample
 
 ```
 yarn ts-node samples/[file_name].ts
+```
+
+## Run tests
+
+```
+yarn test -g protocolclient
+```
+
+Run with debug logging
+
+```
+yarn test-debug -g protocolclient
 ```

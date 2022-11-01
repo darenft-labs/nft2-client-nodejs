@@ -1,5 +1,5 @@
 import {Contract, ethers, utils} from 'ethers';
-import {FormatTypes, ParamType, Result} from 'ethers/lib/utils';
+import {FormatTypes, ParamType, parseEther, Result} from 'ethers/lib/utils';
 
 export const separateJsonSchema = (jsonSchema: any): any[] => {
   const props = jsonSchema?.properties;
@@ -93,9 +93,24 @@ export const encodeDataFromJsonSchema = (jsonSchema: any, data: any) => {
 
   const abi = ethers.utils.defaultAbiCoder;
 
-  const DATA_VALUE = abi.encode(['bytes32', DATA_STRUCT], [TYPE_HASH, data]);
+  const formattedData = formatData(data);
+
+  const DATA_VALUE = abi.encode(
+    ['bytes32', DATA_STRUCT],
+    [TYPE_HASH, formattedData]
+  );
 
   return DATA_VALUE;
+};
+
+const formatData = (data: any): any => {
+  const formattedData = JSON.parse(JSON.stringify(data), (key, value) => {
+    if (typeof value === 'number') {
+      return parseEther(value.toString());
+    }
+    return value;
+  });
+  return formattedData;
 };
 
 export const ACCOUNT_ADDR_LENGTH = 20;
