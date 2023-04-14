@@ -1,6 +1,6 @@
 {
   "name": "@darenft/nft2-client",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "author": "DareNFT",
   "description": "NFT2 Client Library for Node.js",
   "engines": {
