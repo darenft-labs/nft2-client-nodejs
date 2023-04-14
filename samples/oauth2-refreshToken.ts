@@ -17,7 +17,7 @@ function getAuthenticatedClient() {
   return new Promise(async (resolve, reject) => {
     const oAuth2Client = new OAuth2Client({
       apiKey: process.env.API_KEY || '',
-      url: 'https://protocol-stg.dareplay.io',
+      url: process.env.URL || '',
     });
 
     const r = await oAuth2Client.refreshToken(

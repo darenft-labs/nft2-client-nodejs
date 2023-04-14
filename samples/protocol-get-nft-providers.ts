@@ -16,13 +16,15 @@ async function main() {
     mnemonic: process.env.MNEMONIC,
   });
 
-  const nft = await client.getNFTDetail({
+  const providers = await client.getNFTProviders({
     contractAddress: '0xe714950ec8b8f3ccf8cde35eae95dc3387e091a5',
     tokenId: '50401',
     chainId: 97,
+    limit: 10,
+    offset: 0,
   });
 
-  console.log(JSON.stringify(nft));
+  console.log(JSON.stringify(providers));
 }
 
 main().catch(console.error);

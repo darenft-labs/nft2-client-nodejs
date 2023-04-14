@@ -10,27 +10,24 @@ async function main() {
   const client = new ProtocolClient({
     opts: {
       apiKey: process.env.API_KEY || '',
-      url: 'https://protocol-stg.dareplay.io',
+      url: process.env.URL || '',
     },
     rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
     mnemonic: process.env.MNEMONIC,
   });
 
-  const schema = (
-    await client.getNFTMetadataConfig(
-      '0xd3524648ec627fb28216ebd2424ccbecafb6f9c9'
-    )
-  )?.schema;
+  const providerAddress = '0x5a1edbf8017fae540d6471f27e4b963f48b7fdc0';
+
+  const schema = (await client.getProviderSchema(providerAddress))?.jsonSchema;
 
   console.log(JSON.stringify(schema));
 
-  const nftAddr = '0xd3524648ec627fb28216ebd2424ccbecafb6f9c9';
-  const tokenId = '1';
+  const nftAddr = '0xe714950ec8b8f3ccf8cde35eae95dc3387e091a5';
+  const tokenId = '50401';
   const gameValue = {
-    level: ethers.BigNumber.from(10).toString(),
-    star: ethers.BigNumber.from(200).toString(),
-    title: 'demo',
-    xyz: [1, 2, 3],
+    tag: 'hallu',
+    level: 4,
+    attack: 2.5,
   } as any;
 
   const update = await client.updateMetadata({

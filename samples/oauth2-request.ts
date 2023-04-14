@@ -9,7 +9,7 @@ async function main() {
 
   try {
     const result = await oAuth2Client.request({
-      url: 'https://protocol-stg.dareplay.io/nfts/import-nfts',
+      url: '',
       method: 'POST',
       body: JSON.stringify({
         tokenAddress: 'string',
@@ -22,7 +22,6 @@ async function main() {
       }),
       headers: {'Content-Type': 'application/json'},
     });
-
     console.log('result', result);
   } catch (error: any) {
     console.log(JSON.stringify(error?.response?.data));
@@ -32,7 +31,7 @@ async function main() {
 function getAuthenticatedClient() {
   const oAuth2Client = new OAuth2Client({
     apiKey: process.env.API_KEY || '',
-    url: 'https://protocol-stg.dareplay.io',
+    url: process.env.URL || '',
   });
 
   return oAuth2Client;

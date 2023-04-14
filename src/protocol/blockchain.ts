@@ -1,9 +1,7 @@
 import {ethers, Wallet} from 'ethers';
 
 import ManagerFixtureABI from './abis/manager-fixture.abi.json';
-import MetadataFactoryABI from './abis//metadata-factory.abi.json';
-import MetadataTemplateABI from './abis/metadata-template.abi.json';
-import MetadataFactoryHelperABI from './abis/metadata-factory-helper.json';
+import GeneralNFTABI from './abis/general-nft.abi.json';
 
 interface Map {
   [key: number]: any;
@@ -11,10 +9,7 @@ interface Map {
 
 const PROTOCOL_CONTRACTS = {
   97: {
-    managerFixtureAddr: '0x4265c3fC37973ee042F3A9849d99B32C71964CBC',
-    templateFixtureAddr: '0x2e031Cc5a1E684C9Cd1B8c6A5c34c2B698F0D2F6',
-    factoryFixtureAddr: '0xBEe93f0411dcCF50047E44698486DA43d94174Be',
-    helperAddr: '0xc93C78d31A6C4D76590346634CDc63e61E92be4b',
+    keyManagerAddr: '0xbe5b27b31bf0D341582f7dc0fD39915d0F57f572',
   },
 } as Map;
 
@@ -39,7 +34,10 @@ export const getSigner = (
   return signer;
 };
 
-export const getInfos = async (signer: ethers.Wallet) => {
+export const getInfos = async (
+  signer: ethers.Wallet,
+  nftContractAddress: string
+) => {
   const {chainId} = await signer.provider.getNetwork();
 
   const info = PROTOCOL_CONTRACTS?.[chainId];
@@ -47,42 +45,23 @@ export const getInfos = async (signer: ethers.Wallet) => {
     throw new Error('Chain id not supported');
   }
 
-  const {
-    managerFixtureAddr,
-    templateFixtureAddr,
-    factoryFixtureAddr,
-    helperAddr,
-  } = info;
+  const {keyManagerAddr} = info;
 
   const managerFixture = new ethers.Contract(
-    managerFixtureAddr,
+    keyManagerAddr,
     ManagerFixtureABI,
     signer
   );
 
-  const factoryFixture = new ethers.Contract(
-    factoryFixtureAddr,
-    MetadataFactoryABI,
-    signer
-  );
-
-  const templateFixture = new ethers.Contract(
-    templateFixtureAddr,
-    MetadataTemplateABI,
-    signer
-  );
-
-  const helper = new ethers.Contract(
-    helperAddr,
-    MetadataFactoryHelperABI,
+  const nftContract = new ethers.Contract(
+    nftContractAddress,
+    GeneralNFTABI,
     signer
   );
 
   return {
     signer,
     managerFixture,
-    templateFixture,
-    factoryFixture,
-    helper,
+    nftContract,
   };
 };

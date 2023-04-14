@@ -7,21 +7,33 @@ export interface ProtocolClientOptions {
   mnemonic?: string;
 }
 
-export interface NFTMetadataConfig {
+export interface Provider {
   id: number;
-  tokenContractAddress: string;
-  ownerAddress: string;
-  schema?: any;
-  webhook?: any;
+  name: string;
+  description: string;
+  providerAddress: string;
+  providerType: number;
+  url: string;
+}
+
+export interface ProviderSchemaResponse {
+  id: number;
+  jsonSchema: object;
+  version: number;
+  name: string;
+  status: number;
+  parentId: number;
+  publishedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  providerId: number;
+  provider: Provider;
 }
 
 export interface NFTMetadataUpdateRequest {
   tokenId: string;
-
   nftContractAddress: string;
-
   tokenData: any;
-
   schema: any;
 }
 
@@ -57,4 +69,30 @@ interface NFTMetadata {
 export interface NFTDetailResponse {
   nft: NFTDetail;
   metadatas: NFTMetadata[];
+}
+
+export interface NFTDetailRequest {
+  contractAddress: string;
+  tokenId: string;
+  chainId: number;
+}
+
+export interface NFTProviderRequest {
+  tokenId: string;
+  contractAddress: string;
+  chainId: number;
+  limit: number;
+  offset: number;
+}
+
+export interface NFTProviderResponse {
+  items: Provider[];
+  total: number;
+}
+
+export interface NFTMetadataRequest {
+  tokenId: string;
+  contractAddress: string;
+  chainId: number;
+  providerAddress: string;
 }

@@ -1,5 +1,6 @@
 import {Contract, ethers, utils} from 'ethers';
-import {FormatTypes, ParamType, parseEther, Result} from 'ethers/lib/utils';
+import {FormatTypes, ParamType, parseEther} from 'ethers/lib/utils';
+import Ajv from 'ajv';
 
 export const separateJsonSchema = (jsonSchema: any): any[] => {
   const props = jsonSchema?.properties;
@@ -20,8 +21,10 @@ export const convertType = (jsonType: string): string => {
   let type = jsonType;
   switch (jsonType) {
     case 'number':
+      type = 'int256';
+      break;
     case 'integer':
-      type = 'uint256';
+      type = 'int64';
       break;
 
     case 'boolean':
@@ -57,7 +60,7 @@ export const convertJsonSchemaToParamType = (jsonSchema: any): any => {
         };
       }
 
-      if (['number', 'string'].includes(elementType)) {
+      if (['number', 'string', 'integer'].includes(elementType)) {
         return {
           name: field,
           type: convertType(elementType) + '[]',
@@ -93,33 +96,16 @@ export const encodeDataFromJsonSchema = (jsonSchema: any, data: any) => {
 
   const abi = ethers.utils.defaultAbiCoder;
 
-  const formattedData = formatData(data);
-
-  const DATA_VALUE = abi.encode(
-    ['bytes32', DATA_STRUCT],
-    [TYPE_HASH, formattedData]
-  );
+  const DATA_VALUE = abi.encode(['bytes32', DATA_STRUCT], [TYPE_HASH, data]);
 
   return DATA_VALUE;
-};
-
-const formatData = (data: any): any => {
-  const formattedData = JSON.parse(JSON.stringify(data), (key, value) => {
-    if (typeof value === 'number') {
-      return parseEther(value.toString());
-    }
-    return value;
-  });
-  return formattedData;
 };
 
 export const ACCOUNT_ADDR_LENGTH = 20;
 export const JSON_KEY_SIGNATURE_LENGTH = 4;
 
 export const MANAGER_CHANNELS = {
-  METADATA_DEPLOY_CHANNEL: 1,
-  METADATA_GRANT_RIGHT_CHANNEL: 2,
-  METADATA_UPDATE_CHANNEL: 3,
+  METADATA_UPDATE_CHANNEL: 2,
 };
 
 export const STANDARD_METADATA_KEY_TYPE = {
@@ -151,19 +137,40 @@ export const encodeDataKey = (providerAddr: string, key: string): string => {
   return dataKey;
 };
 
-export const getPredictedMetadataAddress = async (
-  nftAddr: string,
-  tokenId: string,
-  helper: Contract,
-  templateFixture: Contract,
-  factoryFixture: Contract
-): Promise<string> => {
-  const predictedMetadataAddr = await helper.getMetadata(
-    templateFixture.address,
-    factoryFixture.address,
-    nftAddr,
-    tokenId
-  );
+export const buildURLQuery = (obj: any) => {
+  return `?${new URLSearchParams(obj)}`;
+};
 
-  return predictedMetadataAddr;
+export const validateData = (jsonSchema: any, jsonData: any): boolean => {
+  const ajv = new Ajv({
+    strictSchema: true,
+    strictNumbers: true,
+    strictTypes: false,
+    strictTuples: 'log',
+    strictRequired: false,
+    coerceTypes: true,
+  });
+
+  ajv.addKeyword({
+    keyword: 'bigNumber',
+    schemaType: 'boolean',
+    modifying: true,
+    validate: (
+      data: any,
+      dataPath: any,
+      parentData: any,
+      parentDataProperty: any
+    ): boolean => {
+      if (parentData?.type === 'number') {
+        parentDataProperty.parentData[parentDataProperty.parentDataProperty] =
+          parseEther(dataPath.toString());
+      }
+
+      return true;
+    },
+  });
+
+  const valid = ajv.validate(jsonSchema, jsonData);
+
+  return valid;
 };

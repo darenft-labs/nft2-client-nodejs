@@ -4,17 +4,23 @@ import {getInfos, getSigner} from './blockchain';
 import {
   separateJsonSchema,
   encodeDataFromJsonSchema,
-  getPredictedMetadataAddress,
   encodeDataKey,
+  buildURLQuery,
+  validateData,
+  MANAGER_CHANNELS,
 } from './utils';
 
 import {OAuth2Client} from '../auth/oauth2client';
 import {
-  NFTMetadataConfig,
   NFTMetadataUpdateRequest,
   ProtocolClientOptions,
   NFTMetadataUpdateResponse,
   NFTDetailResponse,
+  NFTDetailRequest,
+  ProviderSchemaResponse,
+  NFTProviderRequest,
+  NFTProviderResponse,
+  NFTMetadataRequest,
 } from './interfaces';
 
 export class ProtocolClient {
@@ -38,22 +44,28 @@ export class ProtocolClient {
   async updateMetadata(
     data: NFTMetadataUpdateRequest
   ): Promise<NFTMetadataUpdateResponse> {
-    const {signer, managerFixture, templateFixture, factoryFixture, helper} =
-      await getInfos(this.signer);
-    const providerKey = signer.address;
-
     const {nftContractAddress, tokenData, tokenId, schema} = data;
 
-    const schemas = separateJsonSchema(schema) as any;
-    const predictedMetadataAddr = await getPredictedMetadataAddress(
-      nftContractAddress,
-      tokenId,
-      helper,
-      templateFixture,
-      factoryFixture
+    const originalTokenData = JSON.parse(JSON.stringify(tokenData));
+
+    const {signer, managerFixture, nftContract} = await getInfos(
+      this.signer,
+      nftContractAddress
     );
+
+    const chainId = (await managerFixture.provider.getNetwork()).chainId;
+    const providerAddress = signer.address;
+
+    const valid = validateData(schema, tokenData);
+
+    if (!valid) {
+      throw new Error('Json schema not match data');
+    }
+
+    const schemas = separateJsonSchema(schema) as any;
+
     const dataKeys = schemas.map((e: any) => {
-      return encodeDataKey(providerKey, e.key);
+      return encodeDataKey(providerAddress, e.key);
     });
     const dataValues = schemas.map((e: any) =>
       encodeDataFromJsonSchema(e, {
@@ -63,20 +75,19 @@ export class ProtocolClient {
 
     const calls = [
       {
-        target: predictedMetadataAddr,
-        data: templateFixture.interface.encodeFunctionData(
-          'setData(bytes32[],bytes[])',
-          [dataKeys, dataValues]
+        target: nftContractAddress,
+        data: nftContract.interface.encodeFunctionData(
+          'setData(uint256,bytes32[],bytes[])',
+          [tokenId, dataKeys, dataValues]
         ),
       },
     ];
-    const METADATA_UPDATE_CHANNEL = 3;
     const nonces = await Promise.all(
-      calls.map(async c =>
+      calls.map(async () =>
         (
           (await managerFixture.getNonce(
             signer.address,
-            METADATA_UPDATE_CHANNEL
+            MANAGER_CHANNELS.METADATA_UPDATE_CHANNEL
           )) as BigNumber
         ).toString()
       )
@@ -87,7 +98,7 @@ export class ProtocolClient {
           {
             name: 'MetadataRelay',
             version: '0.0.1',
-            chainId: (await managerFixture.provider.getNetwork()).chainId,
+            chainId,
             verifyingContract: managerFixture.address,
           },
           {
@@ -109,16 +120,18 @@ export class ProtocolClient {
     const body = {
       tokenId: tokenId,
       nftContractAddress: nftContractAddress,
+      providerAddress,
+      chainId: chainId,
       metadata: {
         calls: calls,
         nonces: nonces,
         signatures: signatures,
       },
-      tokenData: tokenData,
+      nftData: originalTokenData,
     };
 
     const result = await this.auth.request<NFTMetadataUpdateResponse>({
-      url: `${this.auth.url}/protocols/update-metadata-nft`,
+      url: `${this.auth.url}/client/nfts/update-metadata`,
       method: 'POST',
       body: JSON.stringify(body),
     });
@@ -126,20 +139,15 @@ export class ProtocolClient {
     return result.data;
   }
 
-  async getNFTMetadataConfig(
-    nftContractAddress: string
-  ): Promise<NFTMetadataConfig> {
-    const body = {
-      nftContractAddress,
-    };
-
+  async getProviderSchema(
+    providerAddress: string
+  ): Promise<ProviderSchemaResponse> {
     const result = await this.auth.request({
-      url: `${this.auth.url}/protocols/get-nft-json-schema`,
-      method: 'POST',
-      body: JSON.stringify(body),
+      url: `${this.auth.url}/client/nft-schemas/${providerAddress}`,
+      method: 'GET',
     });
 
-    return result?.data as NFTMetadataConfig;
+    return result?.data as ProviderSchemaResponse;
   }
 
   /**
@@ -147,15 +155,50 @@ export class ProtocolClient {
    * @param tokenId token id of nft
    * @returns nft detail info
    */
-  async getNFTDetail(
-    nftContractAddress: string,
-    tokenId: string
-  ): Promise<NFTDetailResponse> {
+  async getNFTDetail(query: NFTDetailRequest): Promise<NFTDetailResponse> {
+    const params = buildURLQuery({
+      contract_address: query.contractAddress,
+      chain_id: query.chainId,
+    });
+
     const result = await this.auth.request<NFTDetailResponse>({
-      url: `${this.auth.url}/nfts/${nftContractAddress}/id/${tokenId}`,
+      url: `${this.auth.url}/client/nfts/${query.tokenId}${params}`,
       method: 'GET',
     });
 
     return result?.data;
+  }
+
+  async getNFTProviders(
+    query: NFTProviderRequest
+  ): Promise<NFTProviderResponse> {
+    const params = buildURLQuery({
+      contract_address: query.contractAddress,
+      chain_id: query.chainId,
+      limit: query.limit,
+      offset: query.offset,
+    });
+
+    const result = await this.auth.request({
+      url: `${this.auth.url}/client/nfts/${query.tokenId}/providers${params}`,
+      method: 'GET',
+    });
+
+    return result?.data as NFTProviderResponse;
+  }
+
+  async getNFTMetadatas(query: NFTMetadataRequest): Promise<any> {
+    const params = buildURLQuery({
+      contract_address: query.contractAddress,
+      chain_id: query.chainId,
+      provider_address: query.providerAddress,
+    });
+
+    const result = await this.auth.request({
+      url: `${this.auth.url}/client/nfts/${query.tokenId}/metadatas${params}`,
+      method: 'GET',
+    });
+
+    return result?.data as any;
   }
 }
