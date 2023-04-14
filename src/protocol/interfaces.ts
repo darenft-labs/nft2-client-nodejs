@@ -54,21 +54,46 @@ export interface NFTMetadataUpdateResponse {
   rootSignature: string;
 }
 
-interface NFTDetail {
-  id: number;
+interface NFTContract {
+  id: string;
+  name: string;
+  symbol: string;
+  description: string;
   contractAddress: string;
-  tokenId: string;
+  creatorAddress: string;
   ownerAddress: string;
-}
-
-interface NFTMetadata {
-  providerAddress: string;
-  data: any;
+  originalNFTContractAddress: string;
+  originalTokenId: string;
+  parentNFTContractAddress: string;
+  parentTokenId: string;
+  chainId: number;
+  imageUrl: string;
+  type: number;
+  royaltyRate: string;
+  royalties: string;
+  deployedAt: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface NFTDetailResponse {
-  nft: NFTDetail;
-  metadatas: NFTMetadata[];
+  id: string;
+  name: string;
+  description: string;
+  tokenId: string;
+  chainId: number;
+  creatorAddress: string;
+  ownerAddress: string;
+  imageUrl: string;
+  type: number;
+  royalties: string;
+  mintedAt: string;
+  closeAt: string;
+  openAt: string;
+  createdAt: string;
+  updatedAt: string;
+  nftContractAddress: string;
+  nftContract: NFTContract;
 }
 
 export interface NFTDetailRequest {

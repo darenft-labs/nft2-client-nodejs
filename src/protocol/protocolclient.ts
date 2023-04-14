@@ -142,12 +142,12 @@ export class ProtocolClient {
   async getProviderSchema(
     providerAddress: string
   ): Promise<ProviderSchemaResponse> {
-    const result = await this.auth.request({
+    const result = await this.auth.request<ProviderSchemaResponse>({
       url: `${this.auth.url}/client/nft-schemas/${providerAddress}`,
       method: 'GET',
     });
 
-    return result?.data as ProviderSchemaResponse;
+    return result?.data;
   }
 
   /**
@@ -179,12 +179,12 @@ export class ProtocolClient {
       offset: query.offset,
     });
 
-    const result = await this.auth.request({
+    const result = await this.auth.request<NFTProviderResponse>({
       url: `${this.auth.url}/client/nfts/${query.tokenId}/providers${params}`,
       method: 'GET',
     });
 
-    return result?.data as NFTProviderResponse;
+    return result?.data;
   }
 
   async getNFTMetadatas(query: NFTMetadataRequest): Promise<any> {
@@ -199,6 +199,6 @@ export class ProtocolClient {
       method: 'GET',
     });
 
-    return result?.data as any;
+    return result?.data;
   }
 }
