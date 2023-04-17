@@ -121,3 +121,35 @@ export interface NFTMetadataRequest {
   chainId: number;
   providerAddress: string;
 }
+
+export interface NFTTransactionHistoryRequest {
+  filter: {
+    tokenId: string;
+    contractAddress: string;
+    chainId: number;
+  };
+  limit: number;
+  offset: number;
+}
+
+export interface NFTTransactionHistory {
+  id: number;
+  eventType: string;
+  tokenId: string;
+  chainId: number;
+  nftContractAddress: string;
+  txHash: string;
+  blockNumber: number;
+  txIndex: number;
+  logIndex: number;
+  timestamps: number;
+  fromAddress: string;
+  toAddress: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NFTTransactionHistoryResponse {
+  items: NFTTransactionHistory[];
+  total: number;
+}

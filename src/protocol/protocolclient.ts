@@ -21,6 +21,8 @@ import {
   NFTProviderRequest,
   NFTProviderResponse,
   NFTMetadataRequest,
+  NFTTransactionHistoryRequest,
+  NFTTransactionHistoryResponse,
 } from './interfaces';
 
 export class ProtocolClient {
@@ -196,6 +198,23 @@ export class ProtocolClient {
 
     const result = await this.auth.request({
       url: `${this.auth.url}/client/nfts/${query.tokenId}/metadatas${params}`,
+      method: 'GET',
+    });
+
+    return result?.data;
+  }
+
+  async getNFTTransactionHistory(
+    query: NFTTransactionHistoryRequest
+  ): Promise<NFTTransactionHistoryResponse> {
+    const params = buildURLQuery({
+      filter: query.filter,
+      limit: query.limit,
+      offset: query.offset,
+    });
+
+    const result = await this.auth.request<NFTTransactionHistoryResponse>({
+      url: `${this.auth.url}/client/transactions${params}`,
       method: 'GET',
     });
 
