@@ -14,6 +14,7 @@ async function main() {
     },
     rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
     mnemonic: process.env.MNEMONIC,
+    version: process.env.VERSION || '',
   });
 
   const providerAddress = '0x5a1edbf8017fae540d6471f27e4b963f48b7fdc0';

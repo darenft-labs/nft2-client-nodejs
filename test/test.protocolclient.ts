@@ -13,8 +13,8 @@ describe('protocolclient', () => {
   const CODE = 'SOME_CODE';
   const baseUrl = 'https://protocol-stg.dareplay.io';
   const rpcUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545';
-  const mnemonic =
-    'arrange quick noodle fever cover manual rude raise suspect speed gloom letter';
+  const mnemonic = '';
+  const version = 'v1';
 
   describe(__filename, () => {
     let client: ProtocolClient;
@@ -27,6 +27,7 @@ describe('protocolclient', () => {
         },
         rpcUrl: rpcUrl,
         mnemonic: mnemonic,
+        version,
       });
       sandbox = sinon.createSandbox();
     });
