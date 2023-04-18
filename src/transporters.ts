@@ -8,7 +8,7 @@ import {
 import {validate} from './options';
 
 const PRODUCT_NAME = 'nft2-nodejs-client';
-const version = '1.0.6';
+const version = '1.0.7';
 
 export interface Transporter {
   request<T>(opts: GaxiosOptions): GaxiosPromise<T>;

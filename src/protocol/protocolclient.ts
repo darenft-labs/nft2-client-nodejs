@@ -29,6 +29,8 @@ export class ProtocolClient {
   auth: OAuth2Client;
   rpcUrl: string;
   signer: ethers.Wallet;
+  version: string;
+
   constructor(setting: ProtocolClientOptions) {
     this.auth = new OAuth2Client(setting.opts);
 
@@ -37,6 +39,11 @@ export class ProtocolClient {
       privateKey: setting?.privateKey,
       mnemonic: setting?.mnemonic,
     });
+    this.version = setting.version;
+  }
+
+  getHostPath(): string {
+    return `${this.auth.url}/${this.version}`;
   }
 
   /**
@@ -133,7 +140,7 @@ export class ProtocolClient {
     };
 
     const result = await this.auth.request<NFTMetadataUpdateResponse>({
-      url: `${this.auth.url}/client/nfts/update-metadata`,
+      url: `${this.getHostPath()}/client/nfts/update-metadata`,
       method: 'POST',
       body: JSON.stringify(body),
     });
@@ -145,7 +152,7 @@ export class ProtocolClient {
     providerAddress: string
   ): Promise<ProviderSchemaResponse> {
     const result = await this.auth.request<ProviderSchemaResponse>({
-      url: `${this.auth.url}/client/nft-schemas/${providerAddress}`,
+      url: `${this.getHostPath()}/client/nft-schemas/${providerAddress}`,
       method: 'GET',
     });
 
@@ -164,7 +171,7 @@ export class ProtocolClient {
     });
 
     const result = await this.auth.request<NFTDetailResponse>({
-      url: `${this.auth.url}/client/nfts/${query.tokenId}${params}`,
+      url: `${this.getHostPath()}/client/nfts/${query.tokenId}${params}`,
       method: 'GET',
     });
 
@@ -182,7 +189,9 @@ export class ProtocolClient {
     });
 
     const result = await this.auth.request<NFTProviderResponse>({
-      url: `${this.auth.url}/client/nfts/${query.tokenId}/providers${params}`,
+      url: `${this.getHostPath()}/client/nfts/${
+        query.tokenId
+      }/providers${params}`,
       method: 'GET',
     });
 
@@ -197,7 +206,9 @@ export class ProtocolClient {
     });
 
     const result = await this.auth.request({
-      url: `${this.auth.url}/client/nfts/${query.tokenId}/metadatas${params}`,
+      url: `${this.getHostPath()}/client/nfts/${
+        query.tokenId
+      }/metadatas${params}`,
       method: 'GET',
     });
 
@@ -214,7 +225,7 @@ export class ProtocolClient {
     });
 
     const result = await this.auth.request<NFTTransactionHistoryResponse>({
-      url: `${this.auth.url}/client/transactions${params}`,
+      url: `${this.getHostPath()}/client/transactions${params}`,
       method: 'GET',
     });
 
