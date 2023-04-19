@@ -9,7 +9,7 @@ interface Map {
 
 const PROTOCOL_CONTRACTS = {
   97: {
-    keyManagerAddr: '0xbe5b27b31bf0D341582f7dc0fD39915d0F57f572',
+    keyManagerAddr: '0xcbd0225f225e8b7907a70be88dc34752b47a5b86',
   },
 } as Map;
 
