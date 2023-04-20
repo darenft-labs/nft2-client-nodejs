@@ -6,7 +6,7 @@ import {
   request,
 } from 'gaxios';
 import {validate} from './options';
-import * as pack from '../package.json';
+const pack = require('../package.json');
 
 const PRODUCT_NAME = 'nft2-nodejs-client';
 const version = pack.version;
