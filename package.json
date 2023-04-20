@@ -1,6 +1,6 @@
 {
   "name": "@darenft/nft2-client",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "author": "DareNFT",
   "description": "NFT2 Client Library for Node.js",
   "engines": {
@@ -53,8 +53,8 @@
     "typescript": "^4.6.3"
   },
   "files": [
-    "build/src",
-    "!build/src/**/*.map"
+    "build",
+    "!build/**/*.map"
   ],
   "scripts": {
     "test": "c8 mocha build/test",
