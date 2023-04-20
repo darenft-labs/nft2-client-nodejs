@@ -1,5 +1,4 @@
 import * as dotenv from 'dotenv';
-import {ethers} from 'ethers';
 dotenv.config({
   path: __dirname + '/.env',
 });
@@ -17,11 +16,14 @@ async function main() {
     version: process.env.VERSION || '',
   });
 
-  const providerAddress = '0x5a1edbf8017fae540d6471f27e4b963f48b7fdc0';
-
-  const schema = (await client.getProviderSchema(providerAddress))?.jsonSchema;
-
-  console.log(JSON.stringify(schema));
+  const schema = {
+    type: 'object',
+    properties: {
+      tag: {type: 'string'},
+      level: {type: 'integer', bigNumber: true},
+      attack: {type: 'number', bigNumber: true},
+    },
+  };
 
   const nftAddr = '0xe714950ec8b8f3ccf8cde35eae95dc3387e091a5';
   const tokenId = '50401';

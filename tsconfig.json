@@ -6,7 +6,8 @@
     "outDir": "build",
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "allowJs": true
+    "allowJs": true,
+    "module": "commonjs"
   },
   "include": ["src/*.ts", "src/**/*.ts", "test/*.ts", "test/**/*.ts"],
   "exclude": []

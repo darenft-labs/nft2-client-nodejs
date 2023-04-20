@@ -91,16 +91,16 @@ export class ProtocolClient {
         ),
       },
     ];
-    const nonces = await Promise.all(
-      calls.map(async () =>
-        (
-          (await managerFixture.getNonce(
-            signer.address,
-            MANAGER_CHANNELS.METADATA_UPDATE_CHANNEL
-          )) as BigNumber
-        ).toString()
-      )
-    );
+
+    const newTokenId = BigNumber.from(tokenId).shl(64).toString();
+
+    const nonce = (await managerFixture.getNonce(
+      nftContractAddress,
+      newTokenId
+    )) as BigNumber;
+
+    const nonces = [nonce];
+
     const signatures = await Promise.all(
       nonces.map(async (nonce, idx) =>
         signer._signTypedData(
