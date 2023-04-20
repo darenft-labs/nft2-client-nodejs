@@ -9,6 +9,12 @@
     "allowJs": true,
     "module": "commonjs"
   },
-  "include": ["src/*.ts", "src/**/*.ts", "test/*.ts", "test/**/*.ts"],
+  "include": [
+    "src/*.ts",
+    "src/**/*.ts",
+    "test/*.ts",
+    "test/**/*.ts",
+    "package.json"
+  ],
   "exclude": []
 }
