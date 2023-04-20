@@ -2,19 +2,13 @@
   "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
     "lib": ["es2018", "dom"],
-    "rootDir": ".",
+    "rootDir": "./src",
     "outDir": "build",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowJs": true,
     "module": "commonjs"
   },
-  "include": [
-    "src/*.ts",
-    "src/**/*.ts",
-    "test/*.ts",
-    "test/**/*.ts",
-    "package.json"
-  ],
+  "include": ["src/*.ts", "src/**/*.ts"],
   "exclude": []
 }
