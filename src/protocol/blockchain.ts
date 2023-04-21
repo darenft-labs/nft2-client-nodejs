@@ -1,4 +1,4 @@
-import {ethers, Wallet} from 'ethers';
+import {BigNumber, ethers, Wallet} from 'ethers';
 
 import ManagerFixtureABI from './abis/manager-fixture.abi.json';
 import GeneralNFTABI from './abis/general-nft.abi.json';
@@ -12,6 +12,8 @@ const PROTOCOL_CONTRACTS = {
     keyManagerAddr: '0xcbd0225f225e8b7907a70be88dc34752b47a5b86',
   },
 } as Map;
+
+const SHIFT_LEFT = 64;
 
 export const getProvider = (rpcUrl: string) => {
   return new ethers.providers.JsonRpcProvider(rpcUrl);
@@ -64,4 +66,16 @@ export const getInfos = async (
     managerFixture,
     nftContract,
   };
+};
+
+export const getChannel = (
+  nftContractAddress: string,
+  tokenId: string
+): string => {
+  const newTokenId = BigNumber.from(tokenId).shl(SHIFT_LEFT).toString();
+  const newChannel = BigNumber.from(nftContractAddress)
+    .shl(128 + SHIFT_LEFT)
+    .add(newTokenId);
+
+  return newChannel.toString().substring(SHIFT_LEFT);
 };

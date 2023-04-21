@@ -25,6 +25,8 @@ async function main() {
     },
   };
 
+  // return;
+
   const nftAddr = '0xe714950ec8b8f3ccf8cde35eae95dc3387e091a5';
   const tokenId = '50401';
   const gameValue = {

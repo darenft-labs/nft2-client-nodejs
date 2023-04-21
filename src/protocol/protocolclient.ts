@@ -1,5 +1,5 @@
 import {BigNumber, ethers, utils} from 'ethers';
-import {getInfos, getSigner} from './blockchain';
+import {getChannel, getInfos, getSigner} from './blockchain';
 
 import {
   separateJsonSchema,
@@ -92,11 +92,11 @@ export class ProtocolClient {
       },
     ];
 
-    const newTokenId = BigNumber.from(tokenId).shl(64).toString();
+    const newChannel = getChannel(nftContractAddress, tokenId);
 
     const nonce = (await managerFixture.getNonce(
-      nftContractAddress,
-      newTokenId
+      signer.address,
+      newChannel
     )) as BigNumber;
 
     const nonces = [nonce];
