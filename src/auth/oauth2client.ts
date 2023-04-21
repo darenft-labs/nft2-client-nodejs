@@ -214,7 +214,6 @@ export class OAuth2Client extends AuthClient {
 
     let r: GetTokenResponse | null = null;
     let tokens: Credentials | null = null;
-
     try {
       r = await this.refreshToken(thisCreds.refreshToken);
       tokens = r.tokens;
@@ -230,7 +229,7 @@ export class OAuth2Client extends AuthClient {
     }
 
     const credentials = this.credentials;
-    tokens.refreshToken = credentials.refreshToken;
+    tokens.refreshToken = tokens?.refreshToken || credentials.refreshToken;
     tokens.expiresIn = this.getCurrentTime() + tokens.expiresIn;
     this.credentials = tokens;
     const headers: {[index: string]: string} = {

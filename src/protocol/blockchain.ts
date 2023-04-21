@@ -1,4 +1,4 @@
-import {BigNumber, ethers, Wallet} from 'ethers';
+import {BigNumber, ethers, utils, Wallet} from 'ethers';
 
 import ManagerFixtureABI from './abis/manager-fixture.abi.json';
 import GeneralNFTABI from './abis/general-nft.abi.json';
@@ -72,10 +72,15 @@ export const getChannel = (
   nftContractAddress: string,
   tokenId: string
 ): string => {
-  const newTokenId = BigNumber.from(tokenId).shl(SHIFT_LEFT).toString();
-  const newChannel = BigNumber.from(nftContractAddress)
-    .shl(128 + SHIFT_LEFT)
-    .add(newTokenId);
-
-  return newChannel.toString().substring(SHIFT_LEFT);
+  const newChannel = BigNumber.from(
+    utils.keccak256(
+      utils.defaultAbiCoder.encode(
+        ['address', 'uint256'],
+        [nftContractAddress, tokenId]
+      )
+    )
+  )
+    .shr(128)
+    .toString();
+  return newChannel;
 };
