@@ -4,7 +4,7 @@ import {GaxiosError} from 'gaxios';
 import nock from 'nock';
 import * as sinon from 'sinon';
 
-import {ProtocolClient} from '../src';
+import {ChainType, ProtocolClient} from '../src';
 import {ethers} from 'ethers';
 
 nock.disableNetConnect();
@@ -15,6 +15,7 @@ describe('protocolclient', () => {
   const rpcUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545';
   const mnemonic = '';
   const version = 'v1';
+  const chainType = ChainType.STAGING;
 
   describe(__filename, () => {
     let client: ProtocolClient;
@@ -23,7 +24,7 @@ describe('protocolclient', () => {
       client = new ProtocolClient({
         opts: {
           apiKey: CODE,
-          url: baseUrl,
+          chainType,
         },
         rpcUrl: rpcUrl,
         mnemonic: mnemonic,

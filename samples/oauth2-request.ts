@@ -31,7 +31,7 @@ async function main() {
 function getAuthenticatedClient() {
   const oAuth2Client = new OAuth2Client({
     apiKey: process.env.API_KEY || '',
-    url: process.env.URL || '',
+    chainType: parseInt(process.env.CHAIN || '1'),
   });
 
   return oAuth2Client;

@@ -1,3 +1,4 @@
+export * from './auth/constants';
 export {AuthClient} from './auth/authclient';
 export {CredentialRequest, Credentials} from './auth/credentials';
 export {OAuth2Client} from './auth/oauth2client';

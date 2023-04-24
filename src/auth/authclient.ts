@@ -3,6 +3,7 @@ import {GaxiosOptions, GaxiosPromise, GaxiosResponse} from 'gaxios';
 
 import {DefaultTransporter} from '../transporters';
 import {Credentials, Headers} from './credentials';
+import {ChainType} from './constants';
 
 /**
  * Defines the root interface for all clients that generate credentials
@@ -50,7 +51,7 @@ export declare interface AuthClient {
 
 export interface AuthClientOptions {
   apiKey: string;
-  url: string;
+  chainType: ChainType;
   eagerRefreshThreshold?: number;
   forceRefreshOnFailure?: boolean;
 }

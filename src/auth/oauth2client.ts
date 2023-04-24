@@ -19,6 +19,7 @@ import {
   RequestMetadataResponse,
 } from './credentials';
 import {TokenPayload} from './loginticket';
+import {ChainType, HOST_URL} from './constants';
 
 export class OAuth2Client extends AuthClient {
   protected refreshTokenPromises = new Map<string, Promise<GetTokenResponse>>();
@@ -44,7 +45,7 @@ export class OAuth2Client extends AuthClient {
   constructor(opts: AuthClientOptions) {
     super();
     this.apiKey = opts.apiKey;
-    this.url = opts.url;
+    this.url = HOST_URL[opts.chainType || ChainType.STAGING];
     this.eagerRefreshThreshold = opts.eagerRefreshThreshold || 5 * 60;
     this.forceRefreshOnFailure = opts.forceRefreshOnFailure || true;
     this.tokenType = 'Bearer';

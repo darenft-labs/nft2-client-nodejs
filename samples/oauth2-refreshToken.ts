@@ -17,7 +17,7 @@ function getAuthenticatedClient() {
   return new Promise(async (resolve, reject) => {
     const oAuth2Client = new OAuth2Client({
       apiKey: process.env.API_KEY || '',
-      url: process.env.URL || '',
+      chainType: parseInt(process.env.CHAIN || '1'),
     });
 
     const r = await oAuth2Client.refreshToken(

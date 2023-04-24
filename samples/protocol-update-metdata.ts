@@ -9,7 +9,7 @@ async function main() {
   const client = new ProtocolClient({
     opts: {
       apiKey: process.env.API_KEY || '',
-      url: process.env.URL || '',
+      chainType: parseInt(process.env.CHAIN || '1'),
     },
     rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
     mnemonic: process.env.MNEMONIC,

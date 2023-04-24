@@ -18,7 +18,7 @@ function getAuthenticatedClient() {
     const code = process.env.API_KEY || '';
     const oAuth2Client = new OAuth2Client({
       apiKey: code,
-      url: process.env.URL || '',
+      chainType: parseInt(process.env.CHAIN || '1'),
     });
 
     const r = await oAuth2Client.getToken(code);

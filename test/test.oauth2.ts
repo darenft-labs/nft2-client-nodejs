@@ -4,7 +4,7 @@ import {GaxiosError} from 'gaxios';
 import nock from 'nock';
 import * as sinon from 'sinon';
 
-import {OAuth2Client} from '../src';
+import {ChainType, OAuth2Client} from '../src';
 
 nock.disableNetConnect();
 
@@ -16,13 +16,15 @@ describe('oauth2', () => {
   const CODE = 'SOME_CODE';
   const baseUrl = 'https://protocol-stg.dareplay.io';
 
+  const chainType = ChainType.STAGING;
+
   describe(__filename, () => {
     let client: OAuth2Client;
     let sandbox: sinon.SinonSandbox;
     beforeEach(() => {
       client = new OAuth2Client({
         apiKey: CODE,
-        url: baseUrl,
+        chainType,
       });
       sandbox = sinon.createSandbox();
     });
@@ -230,7 +232,7 @@ describe('oauth2', () => {
     it('should refresh if access token will expired soon and time to refresh before expiration is set', async () => {
       const client = new OAuth2Client({
         apiKey: CODE,
-        url: baseUrl,
+        chainType,
         eagerRefreshThreshold: 5,
       });
 
@@ -259,7 +261,7 @@ describe('oauth2', () => {
     it('should not refresh if access token will not expire soon and time to refresh before expiration is set', async () => {
       const client = new OAuth2Client({
         apiKey: CODE,
-        url: baseUrl,
+        chainType,
         eagerRefreshThreshold: 5,
       });
       client.credentials = {
@@ -353,7 +355,7 @@ describe('oauth2', () => {
       it(`should refresh token if the server returns ${code} with no forceRefreshOnFailure`, async () => {
         const client = new OAuth2Client({
           apiKey: CODE,
-          url: baseUrl,
+          chainType,
           forceRefreshOnFailure: false,
         });
         const scopes = [
