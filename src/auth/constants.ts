@@ -6,6 +6,6 @@ export enum ChainType {
 
 export const HOST_URL = {
   [ChainType.STAGING]: 'https://protocol-stg.dareplay.io',
-  [ChainType.TEST_NET]: '',
+  [ChainType.TEST_NET]: 'https://protocol-api-testnet.dareplay.io',
   [ChainType.MAIN_NET]: '',
 };
