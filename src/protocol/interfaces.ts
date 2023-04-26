@@ -24,9 +24,9 @@ export interface ProviderSchemaResponse {
   name: string;
   status: number;
   parentId: number;
-  publishedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  publishedAt: string;
+  createdAt: string;
+  updatedAt: string;
   providerId: number;
   provider: Provider;
 }
@@ -37,12 +37,6 @@ export interface NFTMetadataUpdateRequest {
   tokenData: any;
   schema: any;
 }
-
-interface Nonce {
-  type: 'BigNumber';
-  hex: string;
-}
-
 interface Call {
   target: string;
   data: string;
@@ -50,7 +44,7 @@ interface Call {
 
 export interface NFTMetadataUpdateResponse {
   calls: Call[];
-  nonces: Nonce[];
+  nonces: string[];
   signatures: string[];
   rootSignature: string;
 }
