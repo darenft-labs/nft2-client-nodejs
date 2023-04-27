@@ -1,10 +1,9 @@
 import {
-  GaxiosError,
-  GaxiosOptions,
-  GaxiosPromise,
-  GaxiosResponse,
-} from 'gaxios';
-import * as _ from 'lodash';
+  AxiosError,
+  AxiosResponse,
+  AxiosPromise,
+  AxiosRequestConfig,
+} from 'axios';
 import jwt from 'jsonwebtoken';
 
 import {BodyResponseCallback} from '../transporters';
@@ -100,6 +99,7 @@ export class OAuth2Client extends AuthClient {
     }
 
     let p: Promise<GetTokenResponse> | undefined;
+
     if (!refreshToken) {
       if (!this.apiKey) {
         throw new Error('No API key found');
@@ -144,7 +144,7 @@ export class OAuth2Client extends AuthClient {
     }
     const url = `${this.url}/auth/refresh-token/${refreshToken}`;
 
-    let res: GaxiosResponse<CredentialRequest>;
+    let res: AxiosResponse<CredentialRequest>;
 
     try {
       // request for new token
@@ -154,7 +154,7 @@ export class OAuth2Client extends AuthClient {
         headers: {'Content-Type': 'application/json'},
       });
     } catch (e) {
-      if (e instanceof GaxiosError && e.response?.data) {
+      if (e instanceof AxiosError && e.response?.data) {
         e.message = JSON.stringify(e.response.data);
       }
       throw e;
@@ -186,10 +186,11 @@ export class OAuth2Client extends AuthClient {
     }
   }
 
-  private async refreshAccessTokenAsync() {
-    const r = await this.refreshToken(this.credentials.refreshToken);
+  private async refreshAccessTokenAsync(forceRestart?: boolean) {
+    const r = await this.refreshToken(
+      forceRestart ? null : this.credentials.refreshToken
+    );
     const tokens = r.tokens as Credentials;
-    tokens.refreshToken = this.credentials.refreshToken;
     this.credentials = tokens;
     return {credentials: this.credentials, res: r.res};
   }
@@ -219,7 +220,7 @@ export class OAuth2Client extends AuthClient {
       r = await this.refreshToken(thisCreds.refreshToken);
       tokens = r.tokens;
     } catch (err) {
-      const e = err as GaxiosError;
+      const e = err as AxiosError;
       if (
         e.response &&
         (e.response.status === 403 || e.response.status === 404)
@@ -247,12 +248,12 @@ export class OAuth2Client extends AuthClient {
    * @param callback callback.
    * @return Request object
    */
-  request<T>(opts: GaxiosOptions): GaxiosPromise<T>;
-  request<T>(opts: GaxiosOptions, callback: BodyResponseCallback<T>): void;
+  request<T>(opts: AxiosRequestConfig): AxiosPromise<T>;
+  request<T>(opts: AxiosRequestConfig, callback: BodyResponseCallback<T>): void;
   request<T>(
-    opts: GaxiosOptions,
+    opts: AxiosRequestConfig,
     callback?: BodyResponseCallback<T>
-  ): GaxiosPromise<T> | void {
+  ): AxiosPromise<T> | void {
     if (callback) {
       this.requestAsync<T>(opts).then(
         r => callback(null, r),
@@ -266,10 +267,10 @@ export class OAuth2Client extends AuthClient {
   }
 
   protected async requestAsync<T>(
-    opts: GaxiosOptions,
+    opts: AxiosRequestConfig,
     retry = false
-  ): Promise<GaxiosResponse<T>> {
-    let r2: GaxiosResponse;
+  ): Promise<AxiosResponse<T>> {
+    let r2: AxiosResponse;
     try {
       const r = await this.getRequestMetadataAsync();
 
@@ -285,7 +286,7 @@ export class OAuth2Client extends AuthClient {
 
       r2 = await this.transporter.request<T>(opts);
     } catch (e) {
-      const res = (e as GaxiosError).response;
+      const res = (e as AxiosError).response;
       if (res) {
         const statusCode = res.status;
         // Retry the request for metadata if the following criteria are true:
@@ -302,11 +303,6 @@ export class OAuth2Client extends AuthClient {
         // - We haven't already retried.  It only makes sense to retry once.
         // - The response was a 401 or a 403
         // - No refreshToken was available
-        // - An accessToken, but
-        //   either no expiresIn was available or the forceRefreshOnFailure
-        //   flag is set. The accessToken fails on the first try because it's
-        //   expired. Some developers may choose to enable forceRefreshOnFailure
-        //   to mitigate time-related errors.
 
         const mayRequireRefresh =
           this.credentials &&
@@ -317,9 +313,25 @@ export class OAuth2Client extends AuthClient {
         const isAuthErr = statusCode === 401;
 
         if (!retry && isAuthErr && mayRequireRefresh) {
-          await this.refreshAccessTokenAsync();
+          try {
+            await this.refreshAccessTokenAsync();
+            return this.requestAsync<T>(opts, true);
+          } catch (e2) {
+            const error = e2 as AxiosError;
+            const res2 = (e as AxiosError).response;
 
-          return this.requestAsync<T>(opts, true);
+            if (res2 && res2.status === 401) {
+              const path: string = error.request?.path;
+
+              // If even refresh_token failed
+              if (path.includes('/auth/refresh-token')) {
+                await this.refreshAccessTokenAsync(true);
+                return this.requestAsync<T>(opts, true);
+              }
+            }
+
+            throw e2;
+          }
         }
       }
       throw e;

@@ -1,4 +1,7 @@
-import {BigNumber, ethers, utils} from 'ethers';
+import {BigNumber, ethers} from 'ethers';
+
+const pack = require('../../package.json');
+
 import {getChannel, getInfos, getSigner} from './blockchain';
 
 import {
@@ -7,7 +10,6 @@ import {
   encodeDataKey,
   buildURLQuery,
   validateData,
-  MANAGER_CHANNELS,
 } from './utils';
 
 import {OAuth2Client} from '../auth/oauth2client';
@@ -39,7 +41,8 @@ export class ProtocolClient {
       privateKey: setting?.privateKey,
       mnemonic: setting?.mnemonic,
     });
-    this.version = setting.version;
+
+    this.version = `v${pack.version.split('.')[0]}`;
   }
 
   getHostPath(): string {
@@ -142,7 +145,7 @@ export class ProtocolClient {
     const result = await this.auth.request<NFTMetadataUpdateResponse>({
       url: `${this.getHostPath()}/client/nfts/update-metadata`,
       method: 'POST',
-      body: JSON.stringify(body),
+      data: JSON.stringify(body),
     });
 
     return result.data;

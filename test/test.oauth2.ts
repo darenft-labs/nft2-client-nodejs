@@ -1,6 +1,6 @@
 import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
-import {GaxiosError} from 'gaxios';
+import {AxiosError} from 'axios';
 import nock from 'nock';
 import * as sinon from 'sinon';
 
@@ -195,7 +195,7 @@ describe('oauth2', () => {
       try {
         await client.request({url: 'http://example.com'});
       } catch (e) {
-        assert(e instanceof GaxiosError);
+        assert(e instanceof AxiosError);
         assert.deepEqual(e.response?.data, reAuthErrorBody);
 
         return;
@@ -390,7 +390,7 @@ describe('oauth2', () => {
         try {
           await client.request({url: 'http://example.com/access'});
         } catch (e) {
-          assert(e instanceof GaxiosError);
+          assert(e instanceof AxiosError);
           assert.strictEqual(e.response?.status, code);
 
           return;

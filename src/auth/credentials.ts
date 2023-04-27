@@ -1,4 +1,4 @@
-import {GaxiosError, GaxiosResponse} from 'gaxios';
+import {AxiosError, AxiosResponse} from 'axios';
 
 export interface Credentials {
   /**
@@ -35,31 +35,31 @@ export interface Headers {
 }
 export interface GetTokenCallback {
   (
-    err: GaxiosError | null,
+    err: AxiosError | null,
     token?: Credentials | null,
-    res?: GaxiosResponse | null
+    res?: AxiosResponse | null
   ): void;
 }
 
 export interface GetTokenResponse {
   tokens: Credentials;
-  res: GaxiosResponse | null;
+  res: AxiosResponse | null;
 }
 
 export interface RefreshAccessTokenCallback {
   (
-    err: GaxiosError | null,
+    err: AxiosError | null,
     credentials?: Credentials | null,
-    res?: GaxiosResponse | null
+    res?: AxiosResponse | null
   ): void;
 }
 
 export interface RefreshAccessTokenResponse {
   credentials: Credentials;
-  res: GaxiosResponse | null;
+  res: AxiosResponse | null;
 }
 
 export interface RequestMetadataResponse {
   headers: Headers;
-  res?: GaxiosResponse<void> | null;
+  res?: AxiosResponse<void> | null;
 }

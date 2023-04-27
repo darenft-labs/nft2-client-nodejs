@@ -1,10 +1,11 @@
-import {
-  GaxiosError,
-  GaxiosOptions,
-  GaxiosPromise,
-  GaxiosResponse,
-  request,
-} from 'gaxios';
+import axios, {
+  AxiosInstance,
+  AxiosError,
+  AxiosResponse,
+  AxiosPromise,
+  AxiosRequestConfig,
+} from 'axios';
+
 import {validate} from './options';
 const pack = require('../package.json');
 
@@ -12,21 +13,20 @@ const PRODUCT_NAME = 'nft2-nodejs-client';
 const version = pack.version;
 
 export interface Transporter {
-  request<T>(opts: GaxiosOptions): GaxiosPromise<T>;
-  request<T>(opts: GaxiosOptions, callback?: BodyResponseCallback<T>): void;
+  request<T>(opts: AxiosRequestConfig): AxiosPromise<T>;
   request<T>(
-    opts: GaxiosOptions,
+    opts: AxiosRequestConfig,
     callback?: BodyResponseCallback<T>
-  ): GaxiosPromise | void;
+  ): void;
+  request<T>(
+    opts: AxiosRequestConfig,
+    callback?: BodyResponseCallback<T>
+  ): AxiosPromise | void;
 }
 
 export interface BodyResponseCallback<T> {
   // The `body` object is a truly dynamic type.  It must be `any`.
-  (err: Error | null, res?: GaxiosResponse<T> | null): void;
-}
-
-export interface RequestError extends GaxiosError {
-  errors: Error[];
+  (err: Error | null, res?: AxiosResponse<T> | null): void;
 }
 
 export class DefaultTransporter {
@@ -35,12 +35,20 @@ export class DefaultTransporter {
    */
   static readonly USER_AGENT = `${PRODUCT_NAME}/${version}`;
 
+  transporterInstance: AxiosInstance;
+
+  constructor() {
+    this.transporterInstance = axios.create({
+      timeout: 30000,
+    });
+  }
+
   /**
    * Configures request options before making a request.
-   * @param opts GaxiosOptions options.
+   * @param opts AxiosRequestConfig options.
    * @return Configured options.
    */
-  configure(opts: GaxiosOptions = {}): GaxiosOptions {
+  configure(opts: AxiosRequestConfig = {}): AxiosRequestConfig {
     opts.headers = opts.headers || {};
     if (typeof window === 'undefined') {
       // set transporter user agent if not in browser
@@ -58,16 +66,19 @@ export class DefaultTransporter {
 
   /**
    * Makes a request using Gaxios with given options.
-   * @param opts GaxiosOptions options.
-   * @param callback optional callback that contains GaxiosResponse object.
-   * @return GaxiosPromise, assuming no callback is passed.
+   * @param opts AxiosRequestConfig options.
+   * @param callback optional callback that contains AxiosResponse object.
+   * @return AxiosPromise, assuming no callback is passed.
    */
-  request<T>(opts: GaxiosOptions): GaxiosPromise<T>;
-  request<T>(opts: GaxiosOptions, callback?: BodyResponseCallback<T>): void;
+  request<T>(opts: AxiosRequestConfig): AxiosPromise<T>;
   request<T>(
-    opts: GaxiosOptions,
+    opts: AxiosRequestConfig,
     callback?: BodyResponseCallback<T>
-  ): GaxiosPromise | void {
+  ): void;
+  request<T>(
+    opts: AxiosRequestConfig,
+    callback?: BodyResponseCallback<T>
+  ): AxiosPromise | void {
     // ensure the user isn't passing in request-style options
     opts = this.configure(opts);
     try {
@@ -81,7 +92,7 @@ export class DefaultTransporter {
     }
 
     if (callback) {
-      request<T>(opts).then(
+      this.transporterInstance.request<T>(opts).then(
         r => {
           callback(null, r);
         },
@@ -90,7 +101,7 @@ export class DefaultTransporter {
         }
       );
     } else {
-      return request<T>(opts).catch(e => {
+      return this.transporterInstance.request<T>(opts).catch(e => {
         throw this.processError(e);
       });
     }
@@ -99,27 +110,19 @@ export class DefaultTransporter {
   /**
    * Changes the error to include details from the body.
    */
-  private processError(e: GaxiosError): RequestError {
-    const res = e.response;
-    const err = e as RequestError;
-    const body = res ? res.data : null;
-    if (res && body && body.error && res.status !== 200) {
-      if (typeof body.error === 'string') {
-        err.message = body.error;
-        err.code = res.status.toString();
-      } else if (Array.isArray(body.error.errors)) {
-        err.message = body.error.errors
-          .map((err2: Error) => err2.message)
-          .join('\n');
-        err.code = body.error.code;
-        err.errors = body.error.errors;
-      } else {
-        err.message = body.error.message;
-        err.code = body.error.code || res.status;
-      }
-    } else if (res && res.status >= 400) {
-      // Consider all 4xx and 5xx responses errors.
-      err.message = body;
+  private processError(e: AxiosError) {
+    const res = e?.response || {
+      status: 400,
+      statusText: 'Bad Request',
+      data: null,
+    };
+
+    const err = e;
+    const body: any = res ? res.data : null;
+
+    if (res && res.status >= 400) {
+      err.message = body?.message;
+      err.name = res.statusText;
       err.code = res.status.toString();
     }
     return err;

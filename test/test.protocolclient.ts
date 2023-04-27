@@ -1,6 +1,5 @@
 import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
-import {GaxiosError} from 'gaxios';
 import nock from 'nock';
 import * as sinon from 'sinon';
 
@@ -14,7 +13,6 @@ describe('protocolclient', () => {
   const baseUrl = 'https://protocol-stg.dareplay.io';
   const rpcUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545';
   const mnemonic = '';
-  const version = 'v1';
   const chainType = ChainType.STAGING;
 
   describe(__filename, () => {
@@ -28,7 +26,6 @@ describe('protocolclient', () => {
         },
         rpcUrl: rpcUrl,
         mnemonic: mnemonic,
-        version,
       });
       sandbox = sinon.createSandbox();
     });

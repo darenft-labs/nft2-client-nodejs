@@ -5,7 +5,6 @@ export interface ProtocolClientOptions {
   rpcUrl: string;
   privateKey?: string;
   mnemonic?: string;
-  version: string;
 }
 
 export interface Provider {

@@ -1,5 +1,5 @@
 import {EventEmitter} from 'events';
-import {GaxiosOptions, GaxiosPromise, GaxiosResponse} from 'gaxios';
+import {AxiosPromise, AxiosRequestConfig} from 'axios';
 
 import {DefaultTransporter} from '../transporters';
 import {Credentials, Headers} from './credentials';
@@ -32,7 +32,7 @@ export interface CredentialsClient {
   /**
    * Provides an alternative Gaxios request implementation with auth credentials
    */
-  request<T>(opts: GaxiosOptions): GaxiosPromise<T>;
+  request<T>(opts: AxiosRequestConfig): AxiosPromise<T>;
 
   /**
    * Subscribes a listener to the tokens event triggered when a token is
@@ -68,7 +68,7 @@ export abstract class AuthClient
   /**
    * Provides an alternative Gaxios request implementation with auth credentials
    */
-  abstract request<T>(opts: GaxiosOptions): GaxiosPromise<T>;
+  abstract request<T>(opts: AxiosRequestConfig): AxiosPromise<T>;
 
   /**
    * @return A promise that resolves with the current GCP access token

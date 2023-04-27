@@ -14,7 +14,6 @@ async function main() {
     },
     rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
     mnemonic: process.env.MNEMONIC,
-    version: process.env.VERSION || '',
   });
 
   const providers = await client.getNFTProviders({

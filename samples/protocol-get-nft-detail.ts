@@ -14,7 +14,6 @@ async function main() {
     },
     rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
     mnemonic: process.env.MNEMONIC,
-    version: process.env.VERSION || '',
   });
 
   const nft = await client.getNFTDetail({
@@ -23,7 +22,7 @@ async function main() {
     chainId: 97,
   });
 
-  console.log(JSON.stringify(nft));
+  console.log('nft', JSON.stringify(nft));
 }
 
 main().catch(console.error);
