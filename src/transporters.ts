@@ -65,7 +65,7 @@ export class DefaultTransporter {
   }
 
   /**
-   * Makes a request using Gaxios with given options.
+   * Makes a request using Axios with given options.
    * @param opts AxiosRequestConfig options.
    * @param callback optional callback that contains AxiosResponse object.
    * @return AxiosPromise, assuming no callback is passed.

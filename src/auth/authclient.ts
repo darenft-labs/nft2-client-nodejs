@@ -26,11 +26,11 @@ export interface CredentialsClient {
    */
   // getAccessToken(): Promise<{
   //   token?: string | null;
-  //   res?: GaxiosResponse | null;
+  //   res?: AxiosResponse | null;
   // }>;
 
   /**
-   * Provides an alternative Gaxios request implementation with auth credentials
+   * Provides an alternative Axios request implementation with auth credentials
    */
   request<T>(opts: AxiosRequestConfig): AxiosPromise<T>;
 
@@ -66,7 +66,7 @@ export abstract class AuthClient
   forceRefreshOnFailure = false;
 
   /**
-   * Provides an alternative Gaxios request implementation with auth credentials
+   * Provides an alternative Axios request implementation with auth credentials
    */
   abstract request<T>(opts: AxiosRequestConfig): AxiosPromise<T>;
 
@@ -76,7 +76,7 @@ export abstract class AuthClient
    */
   // abstract getAccessToken(): Promise<{
   //   token?: string | null;
-  //   res?: GaxiosResponse | null;
+  //   res?: AxiosResponse | null;
   // }>;
 
   /**
