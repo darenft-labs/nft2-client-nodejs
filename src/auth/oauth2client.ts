@@ -18,7 +18,7 @@ import {
   RequestMetadataResponse,
 } from './credentials';
 import {TokenPayload} from './loginticket';
-import {ChainType, HOST_URL} from './constants';
+import {AUTHENTICATION, ChainType, ERROR_CODE, HOST_URL} from './constants';
 
 export class OAuth2Client extends AuthClient {
   protected refreshTokenPromises = new Map<string, Promise<GetTokenResponse>>();
@@ -71,7 +71,7 @@ export class OAuth2Client extends AuthClient {
   }
 
   private async getTokenAsync(apiKey: string): Promise<GetTokenResponse> {
-    const url = `${this.url}/auth/api-key/${apiKey}`;
+    const url = `${this.url}${AUTHENTICATION.API_KEY_PATH}/${apiKey}`;
     const res = await this.transporter.request<CredentialRequest>({
       method: 'POST',
       url,
@@ -142,7 +142,7 @@ export class OAuth2Client extends AuthClient {
     if (!refreshToken) {
       throw new Error('No refresh token is set.');
     }
-    const url = `${this.url}/auth/refresh-token/${refreshToken}`;
+    const url = `${this.url}${AUTHENTICATION.REFRESH_TOKEN_PATH}/${refreshToken}`;
 
     let res: AxiosResponse<CredentialRequest>;
 
@@ -286,6 +286,7 @@ export class OAuth2Client extends AuthClient {
 
       r2 = await this.transporter.request<T>(opts);
     } catch (e) {
+      const error = e as AxiosError;
       const res = (e as AxiosError).response;
       if (res) {
         const statusCode = res.status;
@@ -310,26 +311,25 @@ export class OAuth2Client extends AuthClient {
           this.credentials.refreshToken &&
           this.forceRefreshOnFailure;
 
-        const isAuthErr = statusCode === 401;
+        const isAuthErr = statusCode === ERROR_CODE.UNAUTHORIZED;
 
         if (!retry && isAuthErr && mayRequireRefresh) {
           try {
+            if (this.isRefreshTokenPath(error.request?.path)) {
+              return this.forceCallAPIKey<T>(opts);
+            }
+
             await this.refreshAccessTokenAsync();
             return this.requestAsync<T>(opts, true);
           } catch (e2) {
-            const error = e2 as AxiosError;
+            // If both access token and refresh token are expired from server
+            const error2 = e2 as AxiosError;
             const res2 = (e as AxiosError).response;
-
-            if (res2 && res2.status === 401) {
-              const path: string = error.request?.path;
-
-              // If even refresh_token failed
-              if (path.includes('/auth/refresh-token')) {
-                await this.refreshAccessTokenAsync(true);
-                return this.requestAsync<T>(opts, true);
+            if (res2 && res2.status === ERROR_CODE.UNAUTHORIZED) {
+              if (this.isRefreshTokenPath(error2.request?.path)) {
+                return this.forceCallAPIKey<T>(opts);
               }
             }
-
             throw e2;
           }
         }
@@ -337,6 +337,15 @@ export class OAuth2Client extends AuthClient {
       throw e;
     }
     return r2;
+  }
+
+  isRefreshTokenPath(path: string): boolean {
+    return path.includes(AUTHENTICATION.REFRESH_TOKEN_PATH);
+  }
+
+  async forceCallAPIKey<T>(opts: AxiosRequestConfig) {
+    await this.refreshAccessTokenAsync(true);
+    return this.requestAsync<T>(opts, true);
   }
 
   /**
