@@ -2,9 +2,11 @@ import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
 import nock from 'nock';
 import * as sinon from 'sinon';
+import {BigNumber, Wallet, ethers} from 'ethers';
 
 import {ChainType, ProtocolClient} from '../src';
-import {ethers} from 'ethers';
+import {NFTDetailResponse} from '../src/protocol/interfaces';
+import {buildURLQuery} from '../src/protocol/utils';
 
 nock.disableNetConnect();
 
@@ -12,7 +14,11 @@ describe('protocolclient', () => {
   const CODE = 'SOME_CODE';
   const baseUrl = 'https://protocol-stg.dareplay.io';
   const rpcUrl = 'https://data-seed-prebsc-1-s1.binance.org:8545';
-  const mnemonic = '';
+
+  // Just for test
+  const mnemonic =
+    'sell nature comfort actual bridge glory priority shadow blue panel bicycle curious';
+
   const chainType = ChainType.STAGING;
 
   describe(__filename, () => {
@@ -37,129 +43,284 @@ describe('protocolclient', () => {
     });
 
     it('should get token detail', async () => {
-      const contractAddr = '0xd3524648ec627fb28216ebd2424ccbecafb6f9c9';
+      const contractAddress = '0xe714950ec8b8f3ccf8cde35eae95dc3387e091a5';
       const tokenId = '1';
+      const chainId = 97;
 
       const nftInfo = {
-        nft: {
-          id: 1,
-          contractAddress: '0xd3524648ec627fb28216ebd2424ccbecafb6f9c9',
-          tokenId: '1',
-          ownerAddress: '0x3bC45964020373E05728A02591d74b4E484D6481',
+        name: 'Dusk',
+        description: 'Descriptionnnnnnnn',
+        tokenId: '0',
+        chainId: 97,
+        creatorAddress: '0xb60dd7af47691ff70b6396e832d86a8ac3751303',
+        ownerAddress: '0xb60dd7af47691ff70b6396e832d86a8ac3751303',
+        imageUrl:
+          'https://dareplay-public-2.s3.amazonaws.com/dareprotocol/download-d1c4cf02-ec44-4ede-8255-25f814b0058d.png',
+        tokenUri:
+          'https://protocol-stg.dareplay.io/nfts/uri/eefab270-75b6-47ab-b08e-f476ae79edb1',
+        type: 0,
+        royalties: '0.0000000000',
+        status: 0,
+        mintedAt: '2023-04-27T04:02:40.000Z',
+        closeAt: null,
+        openAt: null,
+        nftContractAddress: '0x6357c915a765441bf6a5e91139e727f0fcc8c705',
+        nftContract: {
+          name: 'mor27',
+          symbol: 'mor',
+          description: null,
+          contractAddress: '0x6357c915a765441bf6a5e91139e727f0fcc8c705',
+          creatorAddress: '0xb60dd7af47691ff70b6396e832d86a8ac3751303',
+          ownerAddress: '0xb60dd7af47691ff70b6396e832d86a8ac3751303',
+          originalNFTContractAddress: null,
+          originalTokenId: null,
+          parentNFTContractAddress: null,
+          parentTokenId: null,
+          chainId: 97,
+          imageUrl: null,
+          contractVersion: 2,
+          type: 0,
+          royaltyRate: null,
+          deployedAt: '2023-04-27T04:01:52.000Z',
         },
-        metadatas: [
-          {
-            providerAddress: '0x3bc45964020373e05728a02591d74b4e484d6481',
-            data: {xyz: [1, 2, 3], title: 'demo', level: '10', star: '200'},
-          },
-        ],
       };
       const scopes = [
         nock(baseUrl)
           .post(`/auth/api-key/${CODE}`, undefined)
           .reply(200, {accessToken: 'abc123', expiresIn: 1}),
         nock(baseUrl)
-          .get(`/nfts/${contractAddr}/id/${tokenId}`)
+          .get(
+            `/v1/client/nfts/${tokenId}?contract_address=${contractAddress}&chain_id=${chainId}`
+          )
           .reply(200, nftInfo),
       ];
 
-      // const nft = await client.getNFTDetail(contractAddr, tokenId);
-      // scopes.forEach(s => s.done());
+      const nft = await client.getNFTDetail({
+        contractAddress,
+        tokenId,
+        chainId,
+      });
+      scopes.forEach(s => s.done());
 
-      // assert.deepEqual(nft, nftInfo);
+      assert.deepEqual(nft, nftInfo);
     });
 
-    it('should get config detail', async () => {
-      const contractAddr = '0xd3524648ec627fb28216ebd2424ccbecafb6f9c9';
-
-      const configInfo = {
-        schema: {
-          $schema: 'http://json-schema.org/draft-07/schema#',
-          type: 'object',
-          title: '',
-          description: '',
-          properties: {
-            level: {type: 'string', title: '', description: '', properties: {}},
-            star: {type: 'string', title: '', description: '', properties: {}},
-            title: {type: 'string', title: '', description: '', properties: {}},
-            xyz: {
-              type: 'array',
-              title: '',
-              description: '',
-              items: {
-                type: 'number',
-                title: '',
-                description: '',
-                properties: {},
-              },
-            },
-          },
-          required: [],
-        },
+    it('should get nft metadata', async () => {
+      const metadata = {
+        attack: 1.1,
       };
       const scopes = [
         nock(baseUrl)
           .post(`/auth/api-key/${CODE}`, undefined)
           .reply(200, {accessToken: 'abc123', expiresIn: 1}),
         nock(baseUrl)
-          .post('/protocols/get-nft-json-schema', {
-            nftContractAddress: contractAddr,
-          })
-          .reply(200, configInfo),
+          .get(
+            '/v1/client/nfts/50401/metadatas?contract_address=0xe714950ec8b8f3ccf8cde35eae95dc3387e091a5&chain_id=97&provider_address=0x5a1edbf8017fae540d6471f27e4b963f48b7fdc0'
+          )
+          .reply(200, metadata),
       ];
 
-      // const config = await client.getNFTMetadataConfig(contractAddr);
-      // scopes.forEach(s => s.done());
+      const result = await client.getNFTMetadatas({
+        contractAddress: '0xe714950ec8b8f3ccf8cde35eae95dc3387e091a5',
+        tokenId: '50401',
+        chainId: 97,
+        providerAddress: '0x5a1edbf8017fae540d6471f27e4b963f48b7fdc0',
+      });
+      scopes.forEach(s => s.done());
 
-      // assert.deepEqual(config, configInfo);
+      assert.deepEqual(result, metadata);
     });
 
-    it('should get data for update metadata', async () => {
-      const contractAddr = '0xd3524648ec627fb28216ebd2424ccbecafb6f9c9';
-      const tokenId = '1';
-      const gameValue = {
-        level: ethers.BigNumber.from(10).toString(),
-        star: ethers.BigNumber.from(200).toString(),
-        title: 'demo',
-        xyz: [1, 2, 3],
-      } as any;
+    it('should get nft providers', async () => {
+      const actualResult = {
+        items: [
+          {
+            name: 'Game Provider 1',
+            description: null,
+            providerAddress: '0xf93331c32b85d5783e5628a50c36c6ccb7c92d26',
+            providerType: null,
+            url: null,
+          },
+          {
+            name: 'Game Provider 3',
+            description: null,
+            providerAddress: '0xe6baffdef4e9df674be916d6e076e4887a781d07',
+            providerType: null,
+            url: null,
+          },
+          {
+            name: 'Game Provider 2',
+            description: null,
+            providerAddress: '0x5adba054a64ed79bef659f55dfdb874715e79e5d',
+            providerType: null,
+            url: null,
+          },
+        ],
+        total: 3,
+      };
+      const scopes = [
+        nock(baseUrl)
+          .post(`/auth/api-key/${CODE}`, undefined)
+          .reply(200, {accessToken: 'abc123', expiresIn: 1}),
+        nock(baseUrl)
+          .get(
+            '/v1/client/nfts/0/providers?contract_address=0x6357c915a765441bf6a5e91139e727f0fcc8c705&chain_id=97&limit=10&offset=0'
+          )
+          .reply(200, actualResult),
+      ];
 
-      const schema = {
-        $schema: 'http://json-schema.org/draft-07/schema#',
-        type: 'object',
-        title: '',
-        description: '',
-        properties: {
-          level: {type: 'string', title: '', description: '', properties: {}},
-          star: {type: 'string', title: '', description: '', properties: {}},
-          title: {type: 'string', title: '', description: '', properties: {}},
-          xyz: {
-            type: 'array',
-            title: '',
-            description: '',
-            items: {
+      const result = await client.getNFTProviders({
+        contractAddress: '0x6357c915a765441bf6a5e91139e727f0fcc8c705',
+        tokenId: '0',
+        chainId: 97,
+        limit: 10,
+        offset: 0,
+      });
+      scopes.forEach(s => s.done());
+
+      assert.deepEqual(result, actualResult);
+    });
+
+    it('should get nft transactions', async () => {
+      const actualResult = {
+        items: [
+          {
+            eventType: 'nft2_royalty_changed',
+            tokenId: '2',
+            chainId: 97,
+            nftContractAddress: '0x73a81082556853347ea41b30a0730117ea7a3e53',
+            txHash:
+              '0xd8d3af9ef289d7e5059c63ef8edc680300d310ca95566fb60e375b04e112cc74',
+            blockNumber: 29497251,
+            txIndex: 11,
+            logIndex: 16,
+            timestamps: 1683183728,
+            fromAddress: null,
+            toAddress: null,
+          },
+        ],
+        total: 1,
+      };
+
+      const inputParams = {
+        filter: {
+          contractAddress: '0x6357c915a765441bf6a5e91139e727f0fcc8c705',
+          tokenId: '50401',
+          chainId: 97,
+        },
+        limit: 10,
+        offset: 0,
+      };
+
+      const params = buildURLQuery(inputParams);
+
+      const scopes = [
+        nock(baseUrl)
+          .post(`/auth/api-key/${CODE}`, undefined)
+          .reply(200, {accessToken: 'abc123', expiresIn: 1}),
+        nock(baseUrl)
+          .get(`/v1/client/transactions${params}`)
+          .reply(200, actualResult),
+      ];
+
+      const result = await client.getNFTTransactionHistory(inputParams);
+      scopes.forEach(s => s.done());
+
+      assert.deepEqual(result, actualResult);
+    });
+
+    it('should get provider schema', async () => {
+      const actualResult = {
+        name: 'Game 1',
+        version: 1,
+        jsonSchema: {
+          type: 'object',
+          properties: {
+            tag: {
+              type: 'string',
+            },
+            level: {
+              type: 'integer',
+              bigNumber: true,
+            },
+            attack: {
               type: 'number',
-              title: '',
-              description: '',
-              properties: {},
+              bigNumber: true,
             },
           },
         },
-        required: [],
+        status: 1,
+        publishedAt: null,
+        provider: {
+          name: 'Game Provider 1',
+          description: null,
+          providerAddress: '0xf93331c32b85d5783e5628a50c36c6ccb7c92d26',
+          providerType: null,
+          url: null,
+        },
+        createdAt: '2023-04-21T10:44:52.221Z',
+        updatedAt: '2023-04-21T10:44:52.221Z',
+      };
+      const scopes = [
+        nock(baseUrl)
+          .post(`/auth/api-key/${CODE}`, undefined)
+          .reply(200, {accessToken: 'abc123', expiresIn: 1}),
+        nock(baseUrl)
+          .get(
+            '/v1/client/nft-schemas/0xf93331c32b85d5783e5628a50c36c6ccb7c92d26'
+          )
+          .reply(200, actualResult),
+      ];
+
+      const result = await client.getProviderSchema(
+        '0xf93331c32b85d5783e5628a50c36c6ccb7c92d26'
+      );
+      scopes.forEach(s => s.done());
+
+      assert.deepEqual(result, actualResult);
+    });
+
+    it('should get data for update metadata', async () => {
+      const contractAddress = '0x7bebca6b07172a71e7e591f04521db812db78aa8';
+      const tokenId = '0';
+      const gameValue = {
+        tag: 'demo',
+        level: 2,
+        attack: 1.1,
+      } as any;
+
+      const schema = {
+        type: 'object',
+        properties: {
+          tag: {
+            type: 'string',
+          },
+          level: {
+            type: 'integer',
+            bigNumber: true,
+          },
+          attack: {
+            type: 'number',
+            bigNumber: true,
+          },
+        },
       };
 
       const serverResult = {
         calls: [
           {
-            target: '0x0B60c3E1D27596C69995c359d280182443CcA220',
-            data: '0x14a6e293000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000043bc45964020373e05728a02591d74b4e484d6481d7fe74ba01000000000000003bc45964020373e05728a02591d74b4e484d64812632c52c00000000000000003bc45964020373e05728a02591d74b4e484d6481d212909000000000000000003bc45964020373e05728a02591d74b4e484d64819dd2c3690000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002c000000000000000000000000000000000000000000000000000000000000000a041dfcaa4ad3d8536f4d96eb09587685af0ab3d730888d425259943c7a3f5a2ff000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002313000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a0d1e4f602841e03c44ce7c35139f6bccd37d228e94c7421c2e5eebd7b49f1b877000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000003323030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a09f5f527ed8fe15ba58f24ed07d68d690ed0409fdea6be9ea6da6cae1a748e8f100000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000464656d6f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e0e8f62ca397142a8ee931b3c96be26fd0c037b6ce19cc2b12433f99fe0b649251000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003',
+            target: '0x7bebca6b07172a71e7e591f04521db812db78aa8',
+            data: '0xbb3e5e300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000003146f795b30a4ae2d1eeb537832f00843c2c5b845977210800000000000000000146f795b30a4ae2d1eeb537832f00843c2c5b845d7fe74ba0100000000000000146f795b30a4ae2d1eeb537832f00843c2c5b84546d1af420000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000000a09081e45267ccb7aa6ac7531864da5cc3225c041e94ea08074dfd92b86b41758200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000464656d6f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004016e0b4f27c2d744b48eb8f3e50f0d12728011f49a5d2d2f512f83facac37afc40000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004019fa252543c616913cbb0724dc3ff165e9457ba9957da00b371572d6466f301e0000000000000000000000000000000000000000000000000f43fc2c04ee0000',
           },
         ],
         nonces: [
-          {type: 'BigNumber', hex: '0x0300000000000000000000000000000000'},
+          {
+            type: 'BigNumber',
+            hex: '0x16b176805f1bd3a05aee0cb8e208d38100000000000000000000000000000000',
+          },
         ],
         signatures: [
-          '0xefe39f5d57fbdbd7599b178a1112b1721e4070e314bf1604ccade3f5e66c72f319b236f138fb3a476c6d57f10350c658f1439bcffb14310e7c605b2237dd38021c',
+          '0x9828cf7c396d55b814fb5945d6ddc05d7eb25e72387c47db962ee7ecfe7568fc343e8e80666746d6dbc3e7003f27887311b4787411acda90bcfb91af78c3835f1b',
         ],
         rootSignature:
           '0x07c0aa363772ad813bd32944fbf10e99cb9921390a693144593cb945abe6e6ae118ebd59eaec650f905c7d70bf4a6816eb57d57cbbfb4bb8b07cb4c37b84b10a1b',
@@ -171,33 +332,39 @@ describe('protocolclient', () => {
           .post(`/auth/api-key/${CODE}`, undefined)
           .reply(200, {accessToken: 'abc123', expiresIn: 1}),
         nock(baseUrl)
-          .post('/protocols/update-metadata-nft', {
-            tokenId: '1',
-            nftContractAddress: '0xd3524648ec627fb28216ebd2424ccbecafb6f9c9',
+          .post('/v1/client/nfts/update-metadata', {
+            tokenId: tokenId,
+            nftContractAddress: contractAddress,
+            providerAddress: '0x146f795B30a4ae2d1EEb537832F00843c2C5b845',
+            chainId: 97,
             metadata: {
               calls: [
                 {
-                  target: '0x0B60c3E1D27596C69995c359d280182443CcA220',
-                  data: '0x14a6e293000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000e0000000000000000000000000000000000000000000000000000000000000000465a3365a855f67af24a6008a1322c55b40d1f2e9d7fe74ba010000000000000065a3365a855f67af24a6008a1322c55b40d1f2e92632c52c000000000000000065a3365a855f67af24a6008a1322c55b40d1f2e9d2129090000000000000000065a3365a855f67af24a6008a1322c55b40d1f2e99dd2c3690000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000002c000000000000000000000000000000000000000000000000000000000000000a041dfcaa4ad3d8536f4d96eb09587685af0ab3d730888d425259943c7a3f5a2ff000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000002313000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a0d1e4f602841e03c44ce7c35139f6bccd37d228e94c7421c2e5eebd7b49f1b877000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000003323030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a09f5f527ed8fe15ba58f24ed07d68d690ed0409fdea6be9ea6da6cae1a748e8f100000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000464656d6f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000e0e8f62ca397142a8ee931b3c96be26fd0c037b6ce19cc2b12433f99fe0b6492510000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000de0b6b3a76400000000000000000000000000000000000000000000000000001bc16d674ec8000000000000000000000000000000000000000000000000000029a2241af62c0000',
+                  target: '0x7bebca6b07172a71e7e591f04521db812db78aa8',
+                  data: '0xbb3e5e300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000003146f795b30a4ae2d1eeb537832f00843c2c5b845977210800000000000000000146f795b30a4ae2d1eeb537832f00843c2c5b845d7fe74ba0100000000000000146f795b30a4ae2d1eeb537832f00843c2c5b84546d1af420000000000000000000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000120000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000000a09081e45267ccb7aa6ac7531864da5cc3225c041e94ea08074dfd92b86b41758200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000464656d6f00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004016e0b4f27c2d744b48eb8f3e50f0d12728011f49a5d2d2f512f83facac37afc40000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004019fa252543c616913cbb0724dc3ff165e9457ba9957da00b371572d6466f301e0000000000000000000000000000000000000000000000000f43fc2c04ee0000',
                 },
               ],
-              nonces: ['1020847100762815390390123822295304634368'],
+              nonces: [
+                {
+                  type: 'BigNumber',
+                  hex: '0x16b176805f1bd3a05aee0cb8e208d38100000000000000000000000000000000',
+                },
+              ],
               signatures: [
-                '0xb7dff8b792885faa8ed0727db612e61300bd7cfc164c9f1c3277773efcd01f414b3d2efc471ce88cdf1737b21987892cf2391a9a8cd571a7dd0fe2158e1e74761b',
+                '0x9828cf7c396d55b814fb5945d6ddc05d7eb25e72387c47db962ee7ecfe7568fc343e8e80666746d6dbc3e7003f27887311b4787411acda90bcfb91af78c3835f1b',
               ],
             },
-            tokenData: {
-              level: '10',
-              star: '200',
-              title: 'demo',
-              xyz: [1, 2, 3],
+            nftData: {
+              tag: 'demo',
+              level: 2,
+              attack: 1.1,
             },
           })
           .reply(200, serverResult),
       ];
 
       const result = await client.updateMetadata({
-        nftContractAddress: contractAddr,
+        nftContractAddress: contractAddress,
         tokenId,
         tokenData: gameValue,
         schema,
