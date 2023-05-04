@@ -336,7 +336,7 @@ describe('oauth2', () => {
             .reply(200, {
               accessToken: 'abc123',
               refreshToken: 'refresh-token-placeholder-2',
-              expiresIn: 1000,
+              expiresIn: getExpireTime(2000),
             }),
         ];
 
@@ -350,6 +350,130 @@ describe('oauth2', () => {
 
         scopes.forEach(scope => scope.done());
         assert.strictEqual('abc123', client.credentials.accessToken);
+      });
+
+      it(`should re-call api key if even refresh token is expired and the server returns ${code}`, async () => {
+        const scopes = [
+          nock('http://example.com')
+            .get('/access')
+            .reply(code, {
+              error: {code, message: 'Invalid Credentials'},
+            })
+            .get('/access', undefined, {
+              reqheaders: {Authorization: 'Bearer abc123'},
+            })
+            .reply(200),
+          nock(baseUrl)
+            .persist()
+            .post(
+              `/auth/refresh-token/${'refresh-token-placeholder'}`,
+              undefined
+            )
+            .reply(code, {
+              error: {code, message: 'Invalid Refresh Token'},
+            }),
+          nock(baseUrl)
+            .post(`/auth/api-key/${CODE}`, undefined)
+            .reply(200, {
+              accessToken: 'abc123',
+              refreshToken: 'refresh-token-placeholder-2',
+              expiresIn: getExpireTime(2000),
+            }),
+        ];
+
+        client.credentials = {
+          accessToken: 'initial-access-token',
+          refreshToken: 'refresh-token-placeholder',
+          expiresIn: getExpireTime(2000),
+        };
+
+        await client.request({url: 'http://example.com/access'});
+
+        scopes.forEach(scope => scope.done());
+        assert.strictEqual('abc123', client.credentials.accessToken);
+        assert.strictEqual(
+          'refresh-token-placeholder-2',
+          client.credentials.refreshToken
+        );
+      });
+
+      it('should throw error when the server returns other exception code', async () => {
+        const weirdCode = 404;
+        const scopes = [
+          nock('http://example.com')
+            .get('/access')
+            .reply(code, {
+              error: {code, message: 'Invalid Credentials'},
+            }),
+          nock(baseUrl)
+            .persist()
+            .post(
+              `/auth/refresh-token/${'refresh-token-placeholder'}`,
+              undefined
+            )
+            .reply(weirdCode, {
+              error: {code: weirdCode, message: 'Invalid refresh token'},
+            }),
+        ];
+
+        client.credentials = {
+          accessToken: 'initial-access-token',
+          refreshToken: 'refresh-token-placeholder',
+          expiresIn: getExpireTime(2000),
+        };
+
+        try {
+          await client.request({url: 'http://example.com/access'});
+        } catch (e) {
+          assert(e instanceof AxiosError);
+          assert.strictEqual(e.response?.status, weirdCode);
+
+          return;
+        } finally {
+          scopes.forEach(s => s.done());
+        }
+      });
+
+      it(`should re-call api key if both access token is expired locally and refresh token is expired from the server, which returns ${code}`, async () => {
+        const scopes = [
+          nock('http://example.com')
+            .get('/access', undefined, {
+              reqheaders: {Authorization: 'Bearer abc123'},
+            })
+            .reply(200),
+          nock(baseUrl)
+            .persist()
+            .post(
+              `/auth/refresh-token/${'refresh-token-placeholder'}`,
+              undefined
+            )
+            .reply(code, {
+              error: {code, message: 'Invalid Refresh Token'},
+            }),
+          nock(baseUrl)
+            .persist()
+            .post(`/auth/api-key/${CODE}`, undefined)
+            .reply(200, {
+              accessToken: 'abc123',
+              refreshToken: 'refresh-token-placeholder-2',
+              expiresIn: getExpireTime(2000),
+            }),
+        ];
+
+        client.credentials = {
+          accessToken: 'initial-access-token',
+          refreshToken: 'refresh-token-placeholder',
+          expiresIn: getExpireTime(-1000),
+        };
+
+        await client.request({url: 'http://example.com/access'});
+
+        scopes.forEach(scope => scope.done());
+        assert.strictEqual('abc123', client.credentials.accessToken);
+        assert.strictEqual(
+          'refresh-token-placeholder-2',
+          client.credentials.refreshToken
+        );
       });
 
       it(`should refresh token if the server returns ${code} with no forceRefreshOnFailure`, async () => {
@@ -377,7 +501,7 @@ describe('oauth2', () => {
             .reply(200, {
               accessToken: 'abc123',
               refreshToken: 'refresh-token-placeholder-2',
-              expiresIn: 1000,
+              expiresIn: getExpireTime(1000),
             }),
         ];
 

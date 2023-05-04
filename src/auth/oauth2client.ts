@@ -324,12 +324,13 @@ export class OAuth2Client extends AuthClient {
           } catch (e2) {
             // If both access token and refresh token are expired from server
             const error2 = e2 as AxiosError;
-            const res2 = (e as AxiosError).response;
+            const res2 = (e2 as AxiosError).response;
             if (res2 && res2.status === ERROR_CODE.UNAUTHORIZED) {
               if (this.isRefreshTokenPath(error2.request?.path)) {
                 return this.forceCallAPIKey<T>(opts);
               }
             }
+
             throw e2;
           }
         }

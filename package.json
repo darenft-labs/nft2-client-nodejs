@@ -1,6 +1,6 @@
 {
   "name": "@darenft/nft2-client",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "author": "DareNFT",
   "description": "NFT2 Client Library for Node.js",
   "engines": {
@@ -57,8 +57,9 @@
     "!build/**/*.map"
   ],
   "scripts": {
-    "test": "c8 mocha build/test",
-    "test-debug": "npm run compile && DEBUG=nock.* c8 mocha build/test",
+    "test": "c8 mocha",
+    "test-single": "c8 mocha",
+    "test-debug": "npm run compile && DEBUG=nock.* c8 mocha",
     "clean": "gts clean",
     "prepare": "npm run compile",
     "lint": "gts check",
