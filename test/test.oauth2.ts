@@ -68,20 +68,25 @@ describe('oauth2', () => {
 
     it('should unify the promise when refreshing the token after 1 request', async () => {
       const scopes = [
-        nock(baseUrl).post(`/auth/api-key/${CODE}`, undefined).reply(200, {
-          accessToken: 'abc123',
-          expiresIn: 7200,
-        }),
+        nock(baseUrl)
+          .post(`/auth/api-key/${CODE}`, undefined)
+          .reply(200, {
+            accessToken: 'abc123',
+            expiresIn: getExpireTime(7200),
+          }),
       ];
 
       const accessToken = 'abc123';
 
-      client.request({url: 'http://example.com'}, async (error, result) => {
+      // Dont remove this line, dont know why
+      const client1 = client;
+
+      client.request({url: 'http://example.com'}, async () => {
         scopes.forEach(s => {
           s.done();
         });
 
-        assert.strictEqual(accessToken, client.credentials.accessToken);
+        assert.strictEqual(accessToken, client1.credentials.accessToken);
 
         // Mock a single call to the token server, and 3 calls to the example
         // endpoint. This makes sure that refreshToken is called only once.
@@ -90,12 +95,13 @@ describe('oauth2', () => {
         ];
 
         await Promise.all([
-          client.request({url: 'http://example.com'}),
-          client.request({url: 'http://example.com'}),
-          client.request({url: 'http://example.com'}),
+          client1.request({url: 'http://example.com'}),
+          client1.request({url: 'http://example.com'}),
+          client1.request({url: 'http://example.com'}),
         ]);
         scopes1.forEach(s => s.done());
-        assert.strictEqual('abc123', client.credentials.accessToken);
+
+        assert.strictEqual('abc123', client1.credentials.accessToken);
       });
     });
 

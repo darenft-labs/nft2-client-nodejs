@@ -34,7 +34,6 @@ describe('protocolclient', () => {
     });
 
     afterEach(async () => {
-      nock.disableNetConnect();
       nock.cleanAll();
       sandbox.restore();
     });

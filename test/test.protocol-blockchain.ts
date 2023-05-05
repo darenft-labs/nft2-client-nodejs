@@ -12,7 +12,7 @@ import GeneralNFTABI from '../src/protocol/abis/general-nft.abi.json';
 
 nock.disableNetConnect();
 
-describe('protocolclient', () => {
+describe('protocolclient blockchain', () => {
   const CODE = 'SOME_CODE';
   const baseUrl = 'https://protocol-stg.dareplay.io';
   const rpcUrl = 'http://localhost:8545';
@@ -41,7 +41,6 @@ describe('protocolclient', () => {
     });
 
     afterEach(async () => {
-      nock.disableNetConnect();
       nock.cleanAll();
       sandbox.restore();
     });
