@@ -7,13 +7,11 @@ interface Map {
   [key: number]: any;
 }
 
-const PROTOCOL_CONTRACTS = {
+export const PROTOCOL_CONTRACTS = {
   97: {
     keyManagerAddr: '0xcbd0225f225e8b7907a70be88dc34752b47a5b86',
   },
 } as Map;
-
-const SHIFT_LEFT = 64;
 
 export const getProvider = (rpcUrl: string) => {
   return new ethers.providers.JsonRpcProvider(rpcUrl);
@@ -26,7 +24,10 @@ export const getSigner = (
   let signer: Wallet;
 
   if (opts?.privateKey?.length) {
-    signer = new Wallet(`0x${opts.privateKey}`, getProvider(rpcUrl));
+    signer = new Wallet(
+      opts.privateKey.includes('0x') ? opts.privateKey : `0x${opts.privateKey}`,
+      getProvider(rpcUrl)
+    );
   } else {
     signer = Wallet.fromMnemonic(opts?.mnemonic || '').connect(
       getProvider(rpcUrl)
@@ -65,6 +66,7 @@ export const getInfos = async (
     signer,
     managerFixture,
     nftContract,
+    chainId,
   };
 };
 

@@ -60,12 +60,11 @@ export class ProtocolClient {
 
     const originalTokenData = JSON.parse(JSON.stringify(tokenData));
 
-    const {signer, managerFixture, nftContract} = await getInfos(
+    const {signer, managerFixture, nftContract, chainId} = await getInfos(
       this.signer,
       nftContractAddress
     );
 
-    const chainId = (await managerFixture.provider.getNetwork()).chainId;
     const providerAddress = signer.address;
 
     const valid = validateData(schema, tokenData);
