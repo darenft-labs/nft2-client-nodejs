@@ -60,7 +60,7 @@ export class ProtocolClient {
 
     const originalTokenData = JSON.parse(JSON.stringify(tokenData));
 
-    const {signer, managerFixture, nftContract, chainId} = await getInfos(
+    const {signer, nftContract, chainId} = await getInfos(
       this.signer,
       nftContractAddress
     );
@@ -77,55 +77,41 @@ export class ProtocolClient {
 
     const dataKeys = schemas.map((e: any) => {
       return encodeDataKey(providerAddress, e.key);
-    });
+    }) as string[];
     const dataValues = schemas.map((e: any) =>
       encodeDataFromJsonSchema(e, {
         [e.key]: tokenData[e.key],
       })
-    );
-
-    const calls = [
-      {
-        target: nftContractAddress,
-        data: nftContract.interface.encodeFunctionData(
-          'setData(uint256,bytes32[],bytes[])',
-          [tokenId, dataKeys, dataValues]
-        ),
-      },
-    ];
+    ) as string[];
 
     const newChannel = getChannel(nftContractAddress, tokenId);
 
-    const nonce = (await managerFixture.getNonce(
+    const nonce = (await nftContract.getNonce(
       signer.address,
       newChannel
     )) as BigNumber;
 
-    const nonces = [nonce];
-
-    const signatures = await Promise.all(
-      nonces.map(async (nonce, idx) =>
-        signer._signTypedData(
-          {
-            name: 'MetadataRelay',
-            version: '0.0.1',
-            chainId,
-            verifyingContract: managerFixture.address,
-          },
-          {
-            RelayHash: [
-              {name: 'nonce', type: 'uint256'},
-              {name: 'target', type: 'address'},
-              {name: 'data', type: 'bytes'},
-            ],
-          },
-          {
-            nonce,
-            target: calls[idx].target,
-            data: calls[idx].data,
-          }
-        )
-      )
+    const verifiedSig = await signer._signTypedData(
+      {
+        name: 'ERC725Z2',
+        version: '0.0.1',
+        chainId,
+        verifyingContract: nftContract.address,
+      },
+      {
+        SetData: [
+          {name: 'nonce', type: 'uint256'},
+          {name: 'tokenId', type: 'uint256'},
+          {name: 'dataKeys', type: 'bytes32[]'},
+          {name: 'dataValues', type: 'bytes[]'},
+        ],
+      },
+      {
+        nonce: nonce,
+        tokenId: tokenId,
+        dataKeys,
+        dataValues,
+      }
     );
 
     const body = {
@@ -133,12 +119,10 @@ export class ProtocolClient {
       nftContractAddress: nftContractAddress,
       providerAddress,
       chainId: chainId,
-      metadata: {
-        calls: calls,
-        nonces: nonces,
-        signatures: signatures,
-      },
+      providerSignature: verifiedSig,
       nftData: originalTokenData,
+      dataKeys,
+      dataValues,
     };
 
     const result = await this.auth.request<NFTMetadataUpdateResponse>({

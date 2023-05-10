@@ -36,15 +36,14 @@ export interface NFTMetadataUpdateRequest {
   tokenData: any;
   schema: any;
 }
-interface Call {
-  target: string;
-  data: string;
-}
 
 export interface NFTMetadataUpdateResponse {
-  calls: Call[];
-  nonces: string[];
-  signatures: string[];
+  tokenId: string;
+  dataKeys: string[];
+  dataValues: string[];
+  nonce: string;
+  provider: string;
+  providerSignature: string;
   rootSignature: string;
 }
 

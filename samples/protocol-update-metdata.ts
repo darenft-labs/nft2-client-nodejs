@@ -26,8 +26,8 @@ async function main() {
 
   // return;
 
-  const nftAddr = '0x714febe6dbfb54cc189db8d04286d08aa1af3436';
-  const tokenId = '1';
+  const nftAddr = '0x45a433362442353c92abbb343bcb4c6b339f0208';
+  const tokenId = '0';
   const gameValue = {
     tag: 'hallu',
     level: 4,
