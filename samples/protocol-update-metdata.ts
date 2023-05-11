@@ -26,13 +26,9 @@ async function main() {
 
   // return;
 
-  const nftAddr = '0x45a433362442353c92abbb343bcb4c6b339f0208';
+  const nftAddr = '0xdc8c99b526d666f6eca7f2521516dcf222af1444';
   const tokenId = '0';
-  const gameValue = {
-    tag: 'hallu',
-    level: 4,
-    attack: 2.5,
-  } as any;
+  const gameValue = {tag: 'test', level: 1, attack: 2.5} as any;
 
   const update = await client.updateMetadata({
     nftContractAddress: nftAddr,

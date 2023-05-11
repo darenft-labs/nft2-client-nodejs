@@ -107,8 +107,8 @@ export class ProtocolClient {
         ],
       },
       {
-        nonce: nonce,
-        tokenId: tokenId,
+        nonce,
+        tokenId,
         dataKeys,
         dataValues,
       }

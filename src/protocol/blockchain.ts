@@ -1,17 +1,6 @@
 import {BigNumber, ethers, utils, Wallet} from 'ethers';
 
-import ManagerFixtureABI from './abis/manager-fixture.abi.json';
 import GeneralNFTABI from './abis/general-nft.abi.json';
-
-interface Map {
-  [key: number]: any;
-}
-
-export const PROTOCOL_CONTRACTS = {
-  97: {
-    keyManagerAddr: '0xcbd0225f225e8b7907a70be88dc34752b47a5b86',
-  },
-} as Map;
 
 export const getProvider = (rpcUrl: string) => {
   return new ethers.providers.JsonRpcProvider(rpcUrl);
@@ -43,19 +32,6 @@ export const getInfos = async (
 ) => {
   const {chainId} = await signer.provider.getNetwork();
 
-  const info = PROTOCOL_CONTRACTS?.[chainId];
-  if (!info) {
-    throw new Error('Chain id not supported');
-  }
-
-  const {keyManagerAddr} = info;
-
-  const managerFixture = new ethers.Contract(
-    keyManagerAddr,
-    ManagerFixtureABI,
-    signer
-  );
-
   const nftContract = new ethers.Contract(
     nftContractAddress,
     GeneralNFTABI,
@@ -64,7 +40,6 @@ export const getInfos = async (
 
   return {
     signer,
-    managerFixture,
     nftContract,
     chainId,
   };
