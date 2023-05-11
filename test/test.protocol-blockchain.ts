@@ -6,7 +6,6 @@ import {BigNumber} from 'ethers';
 import {MockProvider, deployMockContract} from 'ethereum-waffle';
 
 import {ChainType, ProtocolClient} from '../src';
-import {getChannel} from '../src/protocol/blockchain';
 import GeneralNFTABI from '../src/protocol/abis/general-nft.abi.json';
 
 nock.disableNetConnect();
@@ -60,7 +59,7 @@ describe('protocolclient blockchain', () => {
 
       assert.deepEqual(mockNFTContract.address, contractAddress);
 
-      const newChannel = getChannel(contractAddress, tokenId);
+      const newChannel = tokenId;
 
       await mockNFTContract.mock.getNonce
         .withArgs(client.signer.address, newChannel)

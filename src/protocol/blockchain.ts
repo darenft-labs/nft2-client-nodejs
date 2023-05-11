@@ -44,20 +44,3 @@ export const getInfos = async (
     chainId,
   };
 };
-
-export const getChannel = (
-  nftContractAddress: string,
-  tokenId: string
-): string => {
-  const newChannel = BigNumber.from(
-    utils.keccak256(
-      utils.defaultAbiCoder.encode(
-        ['address', 'uint256'],
-        [nftContractAddress, tokenId]
-      )
-    )
-  )
-    .shr(128)
-    .toString();
-  return newChannel;
-};

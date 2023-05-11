@@ -2,7 +2,7 @@ import {BigNumber, ethers} from 'ethers';
 
 const pack = require('../../package.json');
 
-import {getChannel, getInfos, getSigner} from './blockchain';
+import {getInfos, getSigner} from './blockchain';
 
 import {
   separateJsonSchema,
@@ -84,11 +84,9 @@ export class ProtocolClient {
       })
     ) as string[];
 
-    const newChannel = getChannel(nftContractAddress, tokenId);
-
     const nonce = (await nftContract.getNonce(
       signer.address,
-      newChannel
+      tokenId
     )) as BigNumber;
 
     const verifiedSig = await signer._signTypedData(
