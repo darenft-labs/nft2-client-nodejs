@@ -26,7 +26,7 @@ async function main() {
 
   // return;
 
-  const nftAddr = '0xdc8c99b526d666f6eca7f2521516dcf222af1444';
+  const nftAddr = '0xfe7c7711c02a1d9f4c73a702fc6890ac48aafad7';
   const tokenId = '0';
   const gameValue = {tag: 'test', level: 1, attack: 2.5} as any;
 

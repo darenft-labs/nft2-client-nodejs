@@ -25,6 +25,9 @@ import {
   NFTMetadataRequest,
   NFTTransactionHistoryRequest,
   NFTTransactionHistoryResponse,
+  NFTRequest,
+  NFTResponse,
+  NFTTokenURIResponse,
 } from './interfaces';
 
 export class ProtocolClient {
@@ -211,6 +214,47 @@ export class ProtocolClient {
     const result = await this.auth.request<NFTTransactionHistoryResponse>({
       url: `${this.getHostPath()}/client/transactions${params}`,
       method: 'GET',
+    });
+
+    return result?.data;
+  }
+
+  async getNFTDetails(query: NFTDetailRequest[]): Promise<NFTResponse> {
+    const result = await this.auth.request<NFTResponse>({
+      url: `${this.getHostPath()}/client/nfts/get-nft-details`,
+      method: 'POST',
+      data: {
+        queryParams: query,
+      },
+    });
+
+    return result?.data;
+  }
+
+  async getNFTs(query: NFTRequest): Promise<NFTResponse> {
+    const params = buildURLQuery({
+      filter: query.filter,
+      limit: query.limit,
+      offset: query.offset,
+    });
+
+    const result = await this.auth.request<NFTResponse>({
+      url: `${this.getHostPath()}/client/nfts${params}`,
+      method: 'GET',
+    });
+
+    return result?.data;
+  }
+
+  async getNFTTokenURIs(
+    query: NFTDetailRequest[]
+  ): Promise<NFTTokenURIResponse> {
+    const result = await this.auth.request<NFTTokenURIResponse>({
+      url: `${this.getHostPath()}/client/nft-token-uris/get-nft-token-uris`,
+      method: 'POST',
+      data: {
+        queryParams: query,
+      },
     });
 
     return result?.data;

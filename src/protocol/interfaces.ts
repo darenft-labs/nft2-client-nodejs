@@ -70,7 +70,6 @@ interface NFTContract {
 }
 
 export interface NFTDetailResponse {
-  id: string;
   name: string;
   description: string;
   tokenId: string;
@@ -144,5 +143,30 @@ export interface NFTTransactionHistory {
 
 export interface NFTTransactionHistoryResponse {
   items: NFTTransactionHistory[];
+  total: number;
+}
+
+export interface NFTRequest {
+  filter: {
+    ownerAddress?: string;
+  };
+  limit: number;
+  offset: number;
+}
+
+export interface NFTResponse {
+  items: NFTDetailResponse[];
+  total: number;
+}
+
+export interface NFTTokenURI {
+  tokenId: string;
+  contractAddress: string;
+  chainId: number;
+  uri: string;
+}
+
+export interface NFTTokenURIResponse {
+  items: NFTTokenURI[];
   total: number;
 }
