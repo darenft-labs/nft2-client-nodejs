@@ -1,4 +1,4 @@
-import {AuthClientOptions} from '../auth/authclient';
+import {AuthClientOptions} from '../../auth/authclient';
 
 export interface ProtocolClientOptions {
   opts: AuthClientOptions;

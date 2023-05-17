@@ -3,10 +3,10 @@ dotenv.config({
   path: __dirname + '/.env',
 });
 
-import {ProtocolClient} from '../src';
+import {DareNFTClient} from '../src';
 
 async function main() {
-  const client = new ProtocolClient({
+  const client = new DareNFTClient({
     opts: {
       apiKey: process.env.API_KEY || '',
       chainType: parseInt(process.env.CHAIN || '1'),
@@ -24,13 +24,11 @@ async function main() {
     },
   };
 
-  // return;
-
   const nftAddr = '0xfe7c7711c02a1d9f4c73a702fc6890ac48aafad7';
   const tokenId = '0';
   const gameValue = {tag: 'test', level: 1, attack: 2.5} as any;
 
-  const update = await client.updateMetadata({
+  const update = await client.nftMetadata.updateMetadata({
     nftContractAddress: nftAddr,
     tokenId,
     tokenData: gameValue,
