@@ -1,4 +1,4 @@
-import {Contract, ethers, utils} from 'ethers';
+import {ethers, utils} from 'ethers';
 import {FormatTypes, ParamType, parseEther} from 'ethers/lib/utils';
 import Ajv from 'ajv';
 

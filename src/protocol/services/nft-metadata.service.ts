@@ -2,18 +2,18 @@ import {Service} from 'typedi';
 import {BigNumber} from 'ethers';
 
 import {AuthService} from './auth.service';
-import {getInfos} from './blockchain';
+import {BlockChainService} from './blockchain.service';
 import {
   separateJsonSchema,
   encodeDataFromJsonSchema,
   encodeDataKey,
   validateData,
-} from './utils';
+  getInfos,
+} from '../utils';
 import {
   NFTMetadataUpdateRequest,
   NFTMetadataUpdateResponse,
-} from './interfaces';
-import {BlockChainService} from './blockchain.service';
+} from '../types/interfaces';
 
 @Service()
 export class NFTMetadataService {

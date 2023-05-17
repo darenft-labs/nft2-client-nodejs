@@ -45,3 +45,10 @@ Run with debug logging
 ```
 yarn test-debug -g protocolclient
 ```
+
+Testing a single file
+
+```
+yarn test-single test/xxx.ts
+yarn test-debug test/
+```

@@ -1,6 +1,6 @@
 import Container from 'typedi';
 
-import {ProtocolClientOptions} from './interfaces';
+import {ProtocolClientOptions} from './types/interfaces';
 import {ProviderService} from './services/provider.service';
 import {AuthService} from './services/auth.service';
 import {NFTService} from './services/nft.service';

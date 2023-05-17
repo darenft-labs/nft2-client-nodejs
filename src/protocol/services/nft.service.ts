@@ -11,8 +11,8 @@ import {
   NFTRequest,
   NFTResponse,
   NFTTokenURIResponse,
-} from './interfaces';
-import {buildURLQuery} from './utils';
+} from '../types/interfaces';
+import {buildURLQuery} from '../utils';
 
 @Service()
 export class NFTService {

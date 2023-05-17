@@ -4,12 +4,12 @@ import nock from 'nock';
 import * as sinon from 'sinon';
 import {Wallet} from 'ethers';
 
-import {ChainType, ProtocolClient} from '../src';
+import {ChainType, DareNFTClient} from '../src';
 import {buildURLQuery} from '../src/protocol/utils';
 
 nock.disableNetConnect();
 
-describe('protocolclient', () => {
+describe('DareNFTClient', () => {
   const CODE = 'SOME_CODE';
   const baseUrl = 'https://protocol-stg.dareplay.io';
   const rpcUrl = 'http://localhost:8545';
@@ -19,10 +19,10 @@ describe('protocolclient', () => {
   const chainType = ChainType.STAGING;
 
   describe(__filename, () => {
-    let client: ProtocolClient;
+    let client: DareNFTClient;
     let sandbox: sinon.SinonSandbox;
     beforeEach(() => {
-      client = new ProtocolClient({
+      client = new DareNFTClient({
         opts: {
           apiKey: CODE,
           chainType,
@@ -91,7 +91,7 @@ describe('protocolclient', () => {
           .reply(200, nftInfo),
       ];
 
-      const nft = await client.getNFTDetail({
+      const nft = await client.nft.getNFTDetail({
         contractAddress,
         tokenId,
         chainId,
@@ -116,7 +116,7 @@ describe('protocolclient', () => {
           .reply(200, metadata),
       ];
 
-      const result = await client.getNFTMetadatas({
+      const result = await client.nft.getNFTMetadatas({
         contractAddress: '0xe714950ec8b8f3ccf8cde35eae95dc3387e091a5',
         tokenId: '50401',
         chainId: 97,
@@ -165,7 +165,7 @@ describe('protocolclient', () => {
           .reply(200, actualResult),
       ];
 
-      const result = await client.getNFTProviders({
+      const result = await client.nft.getNFTProviders({
         contractAddress: '0x6357c915a765441bf6a5e91139e727f0fcc8c705',
         tokenId: '0',
         chainId: 97,
@@ -219,7 +219,7 @@ describe('protocolclient', () => {
           .reply(200, actualResult),
       ];
 
-      const result = await client.getNFTTransactionHistory(inputParams);
+      const result = await client.nft.getNFTTransactionHistory(inputParams);
       scopes.forEach(s => s.done());
 
       assert.deepEqual(result, actualResult);
@@ -268,7 +268,7 @@ describe('protocolclient', () => {
           .reply(200, actualResult),
       ];
 
-      const result = await client.getProviderSchema(
+      const result = await client.provider.getProviderSchema(
         '0xf93331c32b85d5783e5628a50c36c6ccb7c92d26'
       );
       scopes.forEach(s => s.done());

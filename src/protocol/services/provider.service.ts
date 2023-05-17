@@ -1,6 +1,6 @@
 import {Service} from 'typedi';
 import {AuthService} from './auth.service';
-import {ProviderSchemaResponse} from './interfaces';
+import {ProviderSchemaResponse} from '../types/interfaces';
 
 @Service()
 export class ProviderService {

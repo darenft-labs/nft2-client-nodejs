@@ -4,10 +4,10 @@ dotenv.config({
   path: __dirname + '/.env',
 });
 
-import {ProtocolClient} from '../src';
+import {DareNFTClient} from '../src';
 
 async function main() {
-  const client = new ProtocolClient({
+  const client = new DareNFTClient({
     opts: {
       apiKey: process.env.API_KEY || '',
       chainType: parseInt(process.env.CHAIN || '1'),
@@ -16,7 +16,7 @@ async function main() {
     mnemonic: process.env.MNEMONIC,
   });
 
-  const result = await client.getNFTs({
+  const result = await client.nft.getNFTs({
     filter: {
       ownerAddress: '0x5a1edbf8017fae540d6471f27e4b963f48b7fdc0',
     },

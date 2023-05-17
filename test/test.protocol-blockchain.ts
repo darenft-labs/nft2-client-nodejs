@@ -4,13 +4,15 @@ import nock from 'nock';
 import * as sinon from 'sinon';
 import {BigNumber} from 'ethers';
 import {MockProvider, deployMockContract} from 'ethereum-waffle';
+import Container from 'typedi';
 
-import {ChainType, ProtocolClient} from '../src';
+import {ChainType, DareNFTClient} from '../src';
 import GeneralNFTABI from '../src/protocol/abis/general-nft.abi.json';
+import {BlockChainService} from '../src/protocol/services/blockchain.service';
 
 nock.disableNetConnect();
 
-describe('protocolclient blockchain', () => {
+describe('DareNFTClient blockchain', () => {
   const CODE = 'SOME_CODE';
   const baseUrl = 'https://protocol-stg.dareplay.io';
   const rpcUrl = 'http://localhost:8545';
@@ -18,13 +20,15 @@ describe('protocolclient blockchain', () => {
   const chainType = ChainType.STAGING;
 
   describe(__filename, () => {
-    let client: ProtocolClient;
+    let client: DareNFTClient;
     let sandbox: sinon.SinonSandbox;
+    let blockchainService: BlockChainService;
+
     beforeEach(() => {
       const provider = new MockProvider();
       const wallets = provider.getWallets();
 
-      client = new ProtocolClient({
+      client = new DareNFTClient({
         opts: {
           apiKey: CODE,
           chainType,
@@ -33,7 +37,8 @@ describe('protocolclient blockchain', () => {
         privateKey: wallets[0].privateKey,
       });
 
-      client.signer = wallets[0];
+      blockchainService = Container.get(BlockChainService);
+      blockchainService.signer = wallets[0];
 
       sandbox = sinon.createSandbox();
     });
@@ -47,10 +52,10 @@ describe('protocolclient blockchain', () => {
       const contractAddress = '0x7bebca6b07172a71e7e591f04521db812db78aa8';
       const tokenId = '0';
 
-      const {chainId} = await client.signer.provider.getNetwork();
+      const {chainId} = await blockchainService.signer.provider.getNetwork();
 
       const mockNFTContract = await deployMockContract(
-        client.signer,
+        blockchainService.signer,
         GeneralNFTABI,
         {
           address: contractAddress,
@@ -62,7 +67,7 @@ describe('protocolclient blockchain', () => {
       const newChannel = tokenId;
 
       await mockNFTContract.mock.getNonce
-        .withArgs(client.signer.address, newChannel)
+        .withArgs(blockchainService.signer.address, newChannel)
         .returns(BigNumber.from('0x123'));
 
       const tokenData = {
@@ -94,7 +99,7 @@ describe('protocolclient blockchain', () => {
       const payload = {
         tokenId,
         nftContractAddress: contractAddress,
-        providerAddress: client.signer.address,
+        providerAddress: blockchainService.signer.address,
         chainId,
         providerSignature:
           '0x126811bec1d5d10c74403b560bc2c153287927b84c280b7087ff9c358670726e38bef963c287da1f1c90a319444eceb094d53e852f809201b40e230d20ace18e1c',
@@ -127,7 +132,7 @@ describe('protocolclient blockchain', () => {
           .reply(200, serverResult),
       ];
 
-      const result = await client.updateMetadata({
+      const result = await client.nftMetadata.updateMetadata({
         nftContractAddress: contractAddress,
         tokenId,
         tokenData: gameValue,

@@ -1,7 +1,7 @@
 import {ethers} from 'ethers';
 import {Service, ServiceOptions} from 'typedi';
-import {ProtocolClientOptions} from './interfaces';
-import {getSigner} from './blockchain';
+import {ProtocolClientOptions} from '../types/interfaces';
+import {getSigner} from '../utils';
 
 @Service({
   global: true,
