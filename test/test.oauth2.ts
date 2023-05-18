@@ -22,11 +22,11 @@ describe('oauth2', () => {
     let client: OAuth2Client;
     let sandbox: sinon.SinonSandbox;
     beforeEach(() => {
+      sandbox = sinon.createSandbox();
       client = new OAuth2Client({
         apiKey: CODE,
         chainType,
       });
-      sandbox = sinon.createSandbox();
     });
 
     afterEach(async () => {
@@ -66,7 +66,7 @@ describe('oauth2', () => {
       });
     });
 
-    it('should unify the promise when refreshing the token after 1 request', async () => {
+    it('should unify the promise when refreshing the token after 1 request', done => {
       const scopes = [
         nock(baseUrl)
           .post(`/auth/api-key/${CODE}`, undefined)
@@ -102,6 +102,8 @@ describe('oauth2', () => {
         scopes1.forEach(s => s.done());
 
         assert.strictEqual('abc123', client1.credentials.accessToken);
+
+        done();
       });
     });
 
@@ -151,10 +153,12 @@ describe('oauth2', () => {
       // the promise from getting cached for too long.
       const scopes = [
         nock(baseUrl)
-          .persist()
           .post(`/auth/api-key/${CODE}`, undefined)
           .reply(200, {accessToken: 'abc123', expiresIn: 100000}),
         nock('http://example.com').persist().get('/').reply(200),
+        nock(baseUrl)
+          .post(`/auth/api-key/${CODE}`, undefined)
+          .reply(200, {accessToken: 'abc123', expiresIn: 100000}),
       ];
       await client.request({url: 'http://example.com'});
       client.credentials.expiresIn = 1;
@@ -193,7 +197,6 @@ describe('oauth2', () => {
 
       const scopes = [
         nock(baseUrl)
-          .persist()
           .post(`/auth/api-key/${CODE}`, undefined)
           .reply(500, reAuthErrorBody),
       ];
@@ -457,7 +460,6 @@ describe('oauth2', () => {
               error: {code, message: 'Invalid Refresh Token'},
             }),
           nock(baseUrl)
-            .persist()
             .post(`/auth/api-key/${CODE}`, undefined)
             .reply(200, {
               accessToken: 'abc123',

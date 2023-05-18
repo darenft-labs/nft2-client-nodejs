@@ -1,146 +1,135 @@
 import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
 import nock from 'nock';
-import * as sinon from 'sinon';
-import {BigNumber} from 'ethers';
-import {MockProvider, deployMockContract} from 'ethereum-waffle';
+import {MockProvider} from 'ethereum-waffle';
 import Container from 'typedi';
+import * as sinon from 'sinon';
 
-import {ChainType, DareNFTClient} from '../src';
-import GeneralNFTABI from '../src/protocol/abis/general-nft.abi.json';
+import {Chain, ChainType, DareNFTClient} from '../src';
 import {BlockChainService} from '../src/protocol/services/blockchain.service';
 
-nock.disableNetConnect();
-
 describe('DareNFTClient blockchain', () => {
-  const CODE = 'SOME_CODE';
+  const CODE = 'API_2';
+  const accessToken = 'test_token_2';
   const baseUrl = 'https://protocol-stg.dareplay.io';
-  const rpcUrl = 'http://localhost:8545';
-
   const chainType = ChainType.STAGING;
+  let client: DareNFTClient;
+  let blockchainService: BlockChainService;
+  let sandbox: sinon.SinonSandbox;
 
-  describe(__filename, () => {
-    let client: DareNFTClient;
-    let sandbox: sinon.SinonSandbox;
-    let blockchainService: BlockChainService;
+  before(async () => {
+    nock.disableNetConnect();
+  });
 
-    beforeEach(() => {
-      const provider = new MockProvider();
-      const wallets = provider.getWallets();
+  beforeEach(() => {
+    sandbox = sinon.createSandbox();
 
-      client = new DareNFTClient({
-        opts: {
-          apiKey: CODE,
-          chainType,
+    const provider = new MockProvider();
+    const wallets = provider.getWallets();
+
+    client = new DareNFTClient({
+      opts: {
+        apiKey: CODE,
+        chainType,
+      },
+      chainId: Chain.BSC_TESTNET,
+      privateKey: wallets[0].privateKey,
+    });
+
+    blockchainService = Container.get(BlockChainService);
+    blockchainService.signer = wallets[0];
+  });
+
+  afterEach(async () => {
+    nock.cleanAll();
+    sandbox.restore();
+  });
+
+  it('should get data for update metadata', async () => {
+    const contractAddress = '0x7bebca6b07172a71e7e591f04521db812db78aa8';
+    const tokenId = '0';
+
+    const {chainId, signer} = blockchainService;
+
+    const tokenData = {
+      tag: 'demo',
+      level: 2,
+      attack: 1.1,
+    } as any;
+
+    const schema = {
+      type: 'object',
+      properties: {
+        tag: {
+          type: 'string',
         },
-        rpcUrl: rpcUrl,
-        privateKey: wallets[0].privateKey,
-      });
-
-      blockchainService = Container.get(BlockChainService);
-      blockchainService.signer = wallets[0];
-
-      sandbox = sinon.createSandbox();
-    });
-
-    afterEach(async () => {
-      nock.cleanAll();
-      sandbox.restore();
-    });
-
-    it('should get data for update metadata', async () => {
-      const contractAddress = '0x7bebca6b07172a71e7e591f04521db812db78aa8';
-      const tokenId = '0';
-
-      const {chainId} = await blockchainService.signer.provider.getNetwork();
-
-      const mockNFTContract = await deployMockContract(
-        blockchainService.signer,
-        GeneralNFTABI,
-        {
-          address: contractAddress,
-        }
-      );
-
-      assert.deepEqual(mockNFTContract.address, contractAddress);
-
-      const newChannel = tokenId;
-
-      await mockNFTContract.mock.getNonce
-        .withArgs(blockchainService.signer.address, newChannel)
-        .returns(BigNumber.from('0x123'));
-
-      const tokenData = {
-        tag: 'demo',
-        level: 2,
-        attack: 1.1,
-      } as any;
-
-      const schema = {
-        type: 'object',
-        properties: {
-          tag: {
-            type: 'string',
-          },
-          level: {
-            type: 'integer',
-            bigNumber: true,
-          },
-          attack: {
-            type: 'number',
-            bigNumber: true,
-          },
+        level: {
+          type: 'integer',
+          bigNumber: true,
         },
-      };
+        attack: {
+          type: 'number',
+          bigNumber: true,
+        },
+      },
+    };
 
-      const gameValue = JSON.parse(JSON.stringify(tokenData));
-      const nftData = JSON.parse(JSON.stringify(tokenData));
+    const gameValue = JSON.parse(JSON.stringify(tokenData));
+    const nftData = JSON.parse(JSON.stringify(tokenData));
 
-      const payload = {
-        tokenId,
-        nftContractAddress: contractAddress,
-        providerAddress: blockchainService.signer.address,
-        chainId,
-        providerSignature:
-          '0x126811bec1d5d10c74403b560bc2c153287927b84c280b7087ff9c358670726e38bef963c287da1f1c90a319444eceb094d53e852f809201b40e230d20ace18e1c',
-        dataKeys: [
-          '0x17ec8597ff92C3F44523bDc65BF0f1bE632917ff977210800000000000000000',
-          '0x17ec8597ff92C3F44523bDc65BF0f1bE632917ffd7fe74ba0100000000000000',
-          '0x17ec8597ff92C3F44523bDc65BF0f1bE632917ff46d1af420000000000000000',
-        ],
-        dataValues: [
-          '0x9081e45267ccb7aa6ac7531864da5cc3225c041e94ea08074dfd92b86b41758200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000464656d6f00000000000000000000000000000000000000000000000000000000',
-          '0x16e0b4f27c2d744b48eb8f3e50f0d12728011f49a5d2d2f512f83facac37afc40000000000000000000000000000000000000000000000000000000000000002',
-          '0x19fa252543c616913cbb0724dc3ff165e9457ba9957da00b371572d6466f301e0000000000000000000000000000000000000000000000000f43fc2c04ee0000',
-        ],
-      };
+    const payload = {
+      tokenId,
+      nftContractAddress: contractAddress,
+      providerAddress: signer.address,
+      chainId,
+      providerSignature:
+        '0xa7ecce0deafcf7d1a6b71ac502a8cff4b8463c35d571acc0206588179a32fd8973bc0845e505af52af649bf0c27bfbe7f89a0b5e86ca15f1c73b566a07526b5f1c',
+      dataKeys: [
+        '0x17ec8597ff92C3F44523bDc65BF0f1bE632917ff977210800000000000000000',
+        '0x17ec8597ff92C3F44523bDc65BF0f1bE632917ffd7fe74ba0100000000000000',
+        '0x17ec8597ff92C3F44523bDc65BF0f1bE632917ff46d1af420000000000000000',
+      ],
+      dataValues: [
+        '0x9081e45267ccb7aa6ac7531864da5cc3225c041e94ea08074dfd92b86b41758200000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000464656d6f00000000000000000000000000000000000000000000000000000000',
+        '0x16e0b4f27c2d744b48eb8f3e50f0d12728011f49a5d2d2f512f83facac37afc40000000000000000000000000000000000000000000000000000000000000002',
+        '0x19fa252543c616913cbb0724dc3ff165e9457ba9957da00b371572d6466f301e0000000000000000000000000000000000000000000000000f43fc2c04ee0000',
+      ],
+    };
 
-      const serverResult = {
-        ...payload,
-        rootSignature: 'test-root-sig',
-      };
+    const serverResult = {
+      ...payload,
+      rootSignature: 'test-root-sig',
+    };
 
-      const scopes = [
-        nock(baseUrl)
-          .post(`/auth/api-key/${CODE}`, undefined)
-          .reply(200, {accessToken: 'abc123', expiresIn: 1}),
-        nock(baseUrl)
-          .post('/v1/client/nfts/update-metadata', {
-            ...payload,
-            nftData,
-          })
-          .reply(200, serverResult),
-      ];
+    const scopes = [
+      nock(baseUrl)
+        .persist()
+        .post(`/auth/api-key/${CODE}`, undefined)
+        .reply(200, {accessToken: accessToken, expiresIn: 1}),
+      nock(baseUrl)
+        .get(
+          `/v1/client/chains/nonce?contract_address=${contractAddress}&chain_id=${chainId}&provider_address=${signer.address}&token_id=${tokenId}`
+        )
+        .reply(200, {
+          nonce: '291',
+        }),
+      nock(baseUrl)
+        .post('/v1/client/nfts/update-metadata', {
+          ...payload,
+          nftData,
+        })
+        .reply(200, serverResult),
+    ];
 
-      const result = await client.nftMetadata.updateMetadata({
-        nftContractAddress: contractAddress,
-        tokenId,
-        tokenData: gameValue,
-        schema,
-      });
-      scopes.forEach(s => s.done());
-
-      assert.deepEqual(serverResult, result);
+    const result = await client.nftMetadata.updateMetadata({
+      nftContractAddress: contractAddress,
+      tokenId,
+      tokenData: gameValue,
+      schema,
     });
+    scopes.forEach(s => s.done());
+    scopes[0].persist(false);
+
+    assert.deepEqual(serverResult, result);
   });
 });
