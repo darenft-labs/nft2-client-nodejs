@@ -7,5 +7,6 @@ export {OAuth2Client} from './auth/oauth2client';
 export {TokenPayload} from './auth/loginticket';
 export {DareNFTClient} from './protocol/dareclient';
 export * from './protocol/types/interfaces';
+export * from './protocol/utils';
 
 export {DefaultTransporter} from './transporters';

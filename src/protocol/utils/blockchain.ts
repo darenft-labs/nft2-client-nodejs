@@ -1,5 +1,10 @@
 import {ethers, Wallet} from 'ethers';
 
+export enum Chain {
+  BSC = 56,
+  BSC_TESTNET = 97,
+}
+
 export const getProvider = (rpcUrl: string) => {
   return new ethers.providers.JsonRpcProvider(rpcUrl);
 };

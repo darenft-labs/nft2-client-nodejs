@@ -1,8 +1,9 @@
 import {AuthClientOptions} from '../../auth/authclient';
+import {Chain} from '../utils';
 
 export interface ProtocolClientOptions {
   opts: AuthClientOptions;
-  chainId: number;
+  chainId: Chain;
   privateKey?: string;
   mnemonic?: string;
 }

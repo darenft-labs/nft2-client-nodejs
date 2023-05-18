@@ -3,7 +3,7 @@ dotenv.config({
   path: __dirname + '/.env',
 });
 
-import {DareNFTClient} from '../src';
+import {Chain, DareNFTClient} from '../src';
 
 async function main() {
   const client = new DareNFTClient({
@@ -12,7 +12,7 @@ async function main() {
       chainType: parseInt(process.env.CHAIN || '1'),
     },
     mnemonic: process.env.MNEMONIC,
-    chainId: 97,
+    chainId: Chain.BSC_TESTNET,
   });
 
   const schema = {

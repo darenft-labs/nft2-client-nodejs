@@ -4,7 +4,7 @@ dotenv.config({
   path: __dirname + '/.env',
 });
 
-import {DareNFTClient} from '../src';
+import {Chain, DareNFTClient} from '../src';
 
 async function main() {
   const client = new DareNFTClient({
@@ -12,7 +12,7 @@ async function main() {
       apiKey: process.env.API_KEY || '',
       chainType: parseInt(process.env.CHAIN || '1'),
     },
-    rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
+    chainId: Chain.BSC_TESTNET,
     mnemonic: process.env.MNEMONIC,
   });
 
