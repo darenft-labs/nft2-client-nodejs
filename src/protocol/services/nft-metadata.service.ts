@@ -8,12 +8,14 @@ import {
   encodeDataFromJsonSchema,
   encodeDataKey,
   validateData,
-  getInfos,
+  buildURLQuery,
 } from '../utils';
 import {
   NFTMetadataUpdateRequest,
   NFTMetadataUpdateResponse,
+  NFTNonceResponse,
 } from '../types/interfaces';
+import {NFTMetadataRequest} from '../types/interfaces';
 
 @Service()
 export class NFTMetadataService {
@@ -21,6 +23,22 @@ export class NFTMetadataService {
     private authService: AuthService,
     private blockchainService: BlockChainService
   ) {}
+
+  async getNFTNonce(query: NFTMetadataRequest): Promise<NFTNonceResponse> {
+    const params = buildURLQuery({
+      contract_address: query.contractAddress,
+      chain_id: query.chainId,
+      provider_address: query.providerAddress,
+      token_id: query.tokenId,
+    });
+
+    const result = await this.authService.auth.request<NFTNonceResponse>({
+      url: `${this.authService.getHostPath()}/client/chains/nonce${params}`,
+      method: 'GET',
+    });
+
+    return result?.data;
+  }
 
   /**
    * Update NFT metadata.
@@ -33,10 +51,7 @@ export class NFTMetadataService {
 
     const originalTokenData = JSON.parse(JSON.stringify(tokenData));
 
-    const {signer, nftContract, chainId} = await getInfos(
-      this.blockchainService.signer,
-      nftContractAddress
-    );
+    const {signer, chainId} = this.blockchainService;
 
     const providerAddress = signer.address;
 
@@ -57,17 +72,21 @@ export class NFTMetadataService {
       })
     ) as string[];
 
-    const nonce = (await nftContract.getNonce(
-      signer.address,
-      tokenId
-    )) as BigNumber;
+    const nonce = (
+      await this.getNFTNonce({
+        contractAddress: nftContractAddress,
+        chainId,
+        providerAddress,
+        tokenId,
+      })
+    ).nonce;
 
     const verifiedSig = await signer._signTypedData(
       {
         name: 'ERC725Z2',
         version: '0.0.1',
         chainId,
-        verifyingContract: nftContract.address,
+        verifyingContract: nftContractAddress,
       },
       {
         SetData: [
@@ -78,7 +97,7 @@ export class NFTMetadataService {
         ],
       },
       {
-        nonce,
+        nonce: BigNumber.from(nonce),
         tokenId,
         dataKeys,
         dataValues,

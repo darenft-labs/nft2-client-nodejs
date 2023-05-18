@@ -7,12 +7,12 @@ import {getSigner} from '../utils';
   global: true,
 } as ServiceOptions)
 export class BlockChainService {
-  rpcUrl: string;
   signer: ethers.Wallet;
+  chainId: number;
 
   constructor(setting: ProtocolClientOptions) {
-    this.rpcUrl = setting.rpcUrl;
-    this.signer = getSigner(this.rpcUrl, {
+    this.chainId = setting.chainId;
+    this.signer = getSigner({
       privateKey: setting?.privateKey,
       mnemonic: setting?.mnemonic,
     });

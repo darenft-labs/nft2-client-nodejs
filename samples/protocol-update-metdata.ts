@@ -11,8 +11,8 @@ async function main() {
       apiKey: process.env.API_KEY || '',
       chainType: parseInt(process.env.CHAIN || '1'),
     },
-    rpcUrl: 'https://data-seed-prebsc-1-s1.binance.org:8545',
     mnemonic: process.env.MNEMONIC,
+    chainId: 97,
   });
 
   const schema = {

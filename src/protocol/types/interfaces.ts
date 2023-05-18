@@ -2,7 +2,7 @@ import {AuthClientOptions} from '../../auth/authclient';
 
 export interface ProtocolClientOptions {
   opts: AuthClientOptions;
-  rpcUrl: string;
+  chainId: number;
   privateKey?: string;
   mnemonic?: string;
 }
@@ -28,6 +28,10 @@ export interface ProviderSchemaResponse {
   updatedAt: string;
   providerId: number;
   provider: Provider;
+}
+
+export interface NFTNonceResponse {
+  nonce: string;
 }
 
 export interface NFTMetadataUpdateRequest {
