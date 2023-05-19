@@ -4,21 +4,17 @@ import nock from 'nock';
 import {Wallet} from 'ethers';
 import * as sinon from 'sinon';
 
-import {ChainType, DareNFTClient, Chain} from '../src';
+import {ChainType, DareNFTClient, Chain, HOST_URL} from '../src';
 import {buildURLQuery} from '../src/protocol/utils';
-
-const getExpireTime = (expiresIn: number) => {
-  return new Date().getTime() / 1000 + expiresIn;
-};
 
 describe('DareNFTClient', () => {
   const CODE = 'API_2';
-  const baseUrl = 'https://protocol-stg.dareplay.io';
   const accessToken = 'test_token_1';
 
   const mnemonic = Wallet.createRandom().mnemonic.phrase;
 
   const chainType = ChainType.STAGING;
+  const baseUrl = HOST_URL[chainType];
 
   let client: DareNFTClient;
   let sandbox: sinon.SinonSandbox;

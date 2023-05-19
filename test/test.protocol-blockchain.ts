@@ -5,14 +5,14 @@ import {MockProvider} from 'ethereum-waffle';
 import Container from 'typedi';
 import * as sinon from 'sinon';
 
-import {Chain, ChainType, DareNFTClient} from '../src';
+import {Chain, ChainType, DareNFTClient, HOST_URL} from '../src';
 import {BlockChainService} from '../src/protocol/services/blockchain.service';
 
 describe('DareNFTClient blockchain', () => {
   const CODE = 'API_2';
   const accessToken = 'test_token_2';
-  const baseUrl = 'https://protocol-stg.dareplay.io';
   const chainType = ChainType.STAGING;
+  const baseUrl = HOST_URL[chainType];
   let client: DareNFTClient;
   let blockchainService: BlockChainService;
   let sandbox: sinon.SinonSandbox;
