@@ -14,12 +14,14 @@ export class DareNFTClient {
   blockchain: BlockChainService;
 
   constructor(setting: ProtocolClientOptions) {
-    Container.set(AuthService, new AuthService(setting.opts));
-    Container.set(BlockChainService, new BlockChainService(setting));
+    const auth = Container.get(AuthService);
+    auth.init(setting.opts);
+
+    this.blockchain = Container.get(BlockChainService);
+    this.blockchain.init(setting);
 
     this.nft = Container.get(NFTService);
     this.provider = Container.get(ProviderService);
     this.nftMetadata = Container.get(NFTMetadataService);
-    this.blockchain = Container.get(BlockChainService);
   }
 }

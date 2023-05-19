@@ -8,7 +8,7 @@ import {ChainType, DareNFTClient, Chain, HOST_URL} from '../src';
 import {buildURLQuery} from '../src/protocol/utils';
 
 describe('DareNFTClient', () => {
-  const CODE = 'API_2';
+  const CODE = 'API_1';
   const accessToken = 'test_token_1';
 
   const mnemonic = Wallet.createRandom().mnemonic.phrase;

@@ -10,7 +10,9 @@ export class BlockChainService {
   signer: ethers.Wallet;
   chainId: number;
 
-  constructor(setting: ProtocolClientOptions) {
+  constructor() {}
+
+  init(setting: ProtocolClientOptions) {
     this.chainId = setting.chainId;
     this.signer = getSigner({
       privateKey: setting?.privateKey,

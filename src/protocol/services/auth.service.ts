@@ -11,7 +11,9 @@ export class AuthService {
   auth: OAuth2Client;
   version: string;
 
-  constructor(opts: AuthClientOptions) {
+  constructor() {}
+
+  init(opts: AuthClientOptions) {
     this.auth = new OAuth2Client(opts);
     this.version = `v${pack.version.split('.')[0]}`;
   }
