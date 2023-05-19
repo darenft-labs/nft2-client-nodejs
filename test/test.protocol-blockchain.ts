@@ -2,7 +2,6 @@ import assert from 'assert';
 import {describe, it, beforeEach, afterEach} from 'mocha';
 import nock from 'nock';
 import {MockProvider} from 'ethereum-waffle';
-import Container from 'typedi';
 import * as sinon from 'sinon';
 
 import {Chain, ChainType, DareNFTClient, HOST_URL} from '../src';
@@ -36,7 +35,7 @@ describe('DareNFTClient blockchain', () => {
       privateKey: wallets[0].privateKey,
     });
 
-    blockchainService = Container.get(BlockChainService);
+    blockchainService = client.blockchain;
     blockchainService.signer = wallets[0];
   });
 

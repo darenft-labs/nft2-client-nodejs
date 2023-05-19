@@ -4,16 +4,12 @@ import {OAuth2Client} from '../../auth/oauth2client';
 import {AuthClientOptions} from '../../auth/authclient';
 const pack = require('../../../package.json');
 
-@Service({
-  global: true,
-} as ServiceOptions)
+@Service()
 export class AuthService {
   auth: OAuth2Client;
   version: string;
 
-  constructor() {}
-
-  init(opts: AuthClientOptions) {
+  constructor(opts: AuthClientOptions) {
     this.auth = new OAuth2Client(opts);
     this.version = `v${pack.version.split('.')[0]}`;
   }

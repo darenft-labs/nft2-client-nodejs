@@ -3,16 +3,12 @@ import {Service, ServiceOptions} from 'typedi';
 import {ProtocolClientOptions} from '../types/interfaces';
 import {getSigner} from '../utils';
 
-@Service({
-  global: true,
-} as ServiceOptions)
+@Service()
 export class BlockChainService {
   signer: ethers.Wallet;
   chainId: number;
 
-  constructor() {}
-
-  init(setting: ProtocolClientOptions) {
+  constructor(setting: ProtocolClientOptions) {
     this.chainId = setting.chainId;
     this.signer = getSigner({
       privateKey: setting?.privateKey,
