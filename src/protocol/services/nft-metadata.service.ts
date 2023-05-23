@@ -1,5 +1,10 @@
 import {Service} from 'typedi';
 import {BigNumber} from 'ethers';
+import {
+  SignTypedDataVersion,
+  TypedMessage,
+  signTypedData,
+} from '@metamask/eth-sig-util';
 
 import {AuthService} from './auth.service';
 import {BlockChainService} from './blockchain.service';
@@ -81,14 +86,21 @@ export class NFTMetadataService {
       })
     ).nonce;
 
-    const verifiedSig = await signer._signTypedData(
-      {
+    const msgParams = {
+      domain: {
         name: 'ERC725Z2',
         version: '0.0.1',
         chainId,
         verifyingContract: nftContractAddress,
       },
-      {
+      primaryType: 'SetData',
+      types: {
+        EIP712Domain: [
+          {name: 'name', type: 'string'},
+          {name: 'version', type: 'string'},
+          {name: 'chainId', type: 'uint256'},
+          {name: 'verifyingContract', type: 'address'},
+        ],
         SetData: [
           {name: 'nonce', type: 'uint256'},
           {name: 'tokenId', type: 'uint256'},
@@ -96,13 +108,19 @@ export class NFTMetadataService {
           {name: 'dataValues', type: 'bytes[]'},
         ],
       },
-      {
-        nonce: BigNumber.from(nonce),
+      message: {
+        nonce: nonce,
         tokenId,
         dataKeys,
         dataValues,
-      }
-    );
+      },
+    };
+
+    const verifiedSig = signTypedData({
+      privateKey: Buffer.from(signer.privateKey.substring(2), 'hex'),
+      data: msgParams as TypedMessage<any>,
+      version: SignTypedDataVersion.V4,
+    });
 
     const body = {
       tokenId: tokenId,
