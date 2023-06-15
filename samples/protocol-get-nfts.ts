@@ -19,12 +19,14 @@ async function main() {
   const result = await client.nft.getNFTs({
     filter: {
       ownerAddress: '0x5a1edbf8017fae540d6471f27e4b963f48b7fdc0',
+      contractAddress: '0xd34a3a5d3dee29b74d20c6a38b047b181ca8538e',
+      chainId: 97,
     },
     limit: 10,
     offset: 0,
   });
 
-  console.log(JSON.stringify(result));
+  console.log(result);
 }
 
 main().catch(console.error);

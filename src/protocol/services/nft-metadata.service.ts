@@ -14,6 +14,7 @@ import {
   encodeDataKey,
   validateData,
   buildURLQuery,
+  convertData,
 } from '../utils';
 import {
   NFTMetadataUpdateRequest,
@@ -65,6 +66,8 @@ export class NFTMetadataService {
     if (!valid) {
       throw new Error('Json schema not match data');
     }
+
+    convertData(schema, tokenData);
 
     const schemas = separateJsonSchema(schema) as any;
 

@@ -154,6 +154,8 @@ export interface NFTTransactionHistoryResponse {
 export interface NFTRequest {
   filter: {
     ownerAddress?: string;
+    contractAddress?: string;
+    chainId?: number;
   };
   limit: number;
   offset: number;

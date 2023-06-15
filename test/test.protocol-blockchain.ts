@@ -4,7 +4,7 @@ import nock from 'nock';
 import {MockProvider} from 'ethereum-waffle';
 import * as sinon from 'sinon';
 
-import {Chain, ChainType, DareNFTClient, HOST_URL} from '../src';
+import {Chain, ChainType, DareNFTClient, HOST_URL, validateData} from '../src';
 import {BlockChainService} from '../src/protocol/services/blockchain.service';
 
 describe('DareNFTClient blockchain', () => {
@@ -42,6 +42,67 @@ describe('DareNFTClient blockchain', () => {
   afterEach(async () => {
     nock.cleanAll();
     sandbox.restore();
+  });
+
+  it('should be failed with if passing wrong data type', done => {
+    const schema = {
+      type: 'object',
+      properties: {
+        tag: {
+          type: 'string',
+        },
+        level: {
+          type: 'integer',
+          bigNumber: true,
+        },
+        attack: {
+          type: 'number',
+          bigNumber: true,
+        },
+      },
+    };
+
+    const tokenData = {
+      tag: 'demo',
+      level: '9999999999999999',
+      attack: '2384728934728935.666999',
+    } as any;
+
+    const valid = validateData(schema, tokenData);
+
+    assert.deepEqual(valid, false);
+
+    done();
+  });
+
+  it('should be compatible with big number', done => {
+    const schema = {
+      type: 'object',
+      properties: {
+        tag: {
+          type: 'string',
+        },
+        level: {
+          type: 'integer',
+          bigNumber: true,
+        },
+        attack: {
+          type: 'number',
+          bigNumber: true,
+        },
+      },
+    };
+
+    const tokenData = {
+      tag: 'demo',
+      level: 9999999999999999,
+      attack: 2384728934728935.666999,
+    } as any;
+
+    const valid = validateData(schema, tokenData);
+
+    assert.deepEqual(valid, true);
+    done();
   });
 
   it('should get data for update metadata', async () => {

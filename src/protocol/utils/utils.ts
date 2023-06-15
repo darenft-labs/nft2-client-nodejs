@@ -138,10 +138,30 @@ export const encodeDataKey = (providerAddr: string, key: string): string => {
 };
 
 export const buildURLQuery = (obj: any) => {
-  return `?${new URLSearchParams(obj)}`;
+  const query = obj;
+
+  if (obj?.filter) {
+    query.filter = JSON.stringify(obj.filter);
+  }
+  return `?${new URLSearchParams(query)}`;
 };
 
 export const validateData = (jsonSchema: any, jsonData: any): boolean => {
+  const ajv = new Ajv({
+    strictSchema: false,
+    strictNumbers: true,
+    strictTypes: false,
+    strictTuples: 'log',
+    strictRequired: false,
+    coerceTypes: false,
+  });
+
+  const valid = ajv.validate(jsonSchema, jsonData);
+
+  return valid;
+};
+
+export const convertData = (jsonSchema: any, jsonData: any) => {
   const ajv = new Ajv({
     strictSchema: true,
     strictNumbers: true,
@@ -170,7 +190,5 @@ export const validateData = (jsonSchema: any, jsonData: any): boolean => {
     },
   });
 
-  const valid = ajv.validate(jsonSchema, jsonData);
-
-  return valid;
+  ajv.validate(jsonSchema, jsonData);
 };
