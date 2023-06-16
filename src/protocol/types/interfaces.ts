@@ -31,6 +31,18 @@ export interface ProviderSchemaResponse {
   provider: Provider;
 }
 
+export interface ProviderVault {
+  contractAddress: string;
+  ownerAddress: string;
+  chainId: number;
+  type: number;
+}
+
+export interface ProviderVaultsResponse {
+  items: ProviderVault[];
+  total: number;
+}
+
 export interface NFTNonceResponse {
   nonce: string;
 }
