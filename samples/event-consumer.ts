@@ -5,9 +5,22 @@ dotenv.config({
 
 import {ConsumerConfig, KafkaConfig, InstrumentationEvent} from 'kafkajs';
 import {EventConsumer} from '../src';
+import {EventPayload} from '../src/event-consumer/types/interfaces';
 
 const handleConsumerError = async (err: InstrumentationEvent<any>) => {
   console.log(err);
+};
+
+type NFT2_LOCKED = {
+  from: string;
+  token: string;
+  tokenid: string;
+};
+
+type NFT2_TRANSFERED = {
+  from: string;
+  to: string;
+  tokenid: string;
 };
 
 async function main() {
@@ -36,7 +49,9 @@ async function main() {
   const eventConsumer = new EventConsumer({
     client,
     consumerConfig,
-    eventListener: async (event: any) => {
+    eventListener: async (
+      event: EventPayload<NFT2_LOCKED & NFT2_TRANSFERED>
+    ) => {
       console.log(event);
     },
   });

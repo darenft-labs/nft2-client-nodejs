@@ -4,7 +4,7 @@ import {KafkaOptions, EventPayload} from './types/interfaces';
 export class EventConsumer {
   private kafka: Kafka;
   private consumer: Consumer;
-  eventListener: (event: EventPayload) => Promise<void>;
+  eventListener: (event: EventPayload<any>) => Promise<void>;
 
   constructor(options: KafkaOptions) {
     this.kafka = new Kafka(options.client);
