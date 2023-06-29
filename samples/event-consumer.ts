@@ -1,0 +1,62 @@
+import * as dotenv from 'dotenv';
+dotenv.config({
+  path: __dirname + '/.env',
+});
+
+import {ConsumerConfig, KafkaConfig, InstrumentationEvent} from 'kafkajs';
+import {EventConsumer} from '../src';
+
+const handleConsumerError = async (err: InstrumentationEvent<any>) => {
+  console.log(err);
+};
+
+async function main() {
+  const client = {
+    clientId: process.env.KAFKA_CLIENT_ID,
+    brokers: [process.env.KAFKA_BROKERS],
+    ssl: true,
+    sasl: {
+      mechanism: 'plain',
+      username: process.env.KAFKA_USERNAME,
+      password: process.env.KAFKA_PASSWD,
+    },
+    requestTimeout: 30000,
+    retry: {
+      initialRetryTime: 2000,
+      multiplier: 2,
+      maxRetryTime: 30000,
+      retries: 5,
+    },
+  } as KafkaConfig;
+
+  const consumerConfig = {
+    groupId: `${process.env.KAFKA_GROUP_PREFIX}.${process.env.KAFKA_GROUP_NAME}`,
+  } as ConsumerConfig;
+
+  const eventConsumer = new EventConsumer({
+    client,
+    consumerConfig,
+    eventListener: async (event: any) => {
+      console.log(event);
+    },
+  });
+
+  await eventConsumer.connect();
+  await eventConsumer.subscribe(process.env.KAFKA_TOPIC || '');
+  const consumer = eventConsumer.getConsumer();
+
+  const {DISCONNECT, CRASH, STOP} = consumer.events;
+  consumer.on(DISCONNECT, e => {
+    handleConsumerError(e);
+  });
+  consumer.on(CRASH, e => {
+    handleConsumerError(e);
+  });
+  consumer.on(STOP, e => {
+    handleConsumerError(e);
+  });
+
+  eventConsumer.bindTopicToConsumer();
+}
+
+main().catch(console.error);

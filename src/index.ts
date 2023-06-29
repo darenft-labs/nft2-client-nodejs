@@ -8,5 +8,6 @@ export {TokenPayload} from './auth/loginticket';
 export {DareNFTClient} from './protocol/dareclient';
 export * from './protocol/types/interfaces';
 export * from './protocol/utils';
+export * from './event-consumer';
 
 export {DefaultTransporter} from './transporters';

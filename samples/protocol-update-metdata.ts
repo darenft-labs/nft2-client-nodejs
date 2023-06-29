@@ -11,7 +11,8 @@ async function main() {
       apiKey: process.env.API_KEY || '',
       chainType: parseInt(process.env.CHAIN || '1'),
     },
-    mnemonic: process.env.MNEMONIC,
+    // mnemonic: process.env.MNEMONIC,
+    privateKey: process.env.PRIVKEY,
     chainId: Chain.BSC_TESTNET,
   });
 
@@ -24,8 +25,8 @@ async function main() {
     },
   };
 
-  const nftAddr = '0xfe7c7711c02a1d9f4c73a702fc6890ac48aafad7';
-  const tokenId = '0';
+  const nftAddr = '0xe8125dcd6c0e1b7d619f489cc763199889600084';
+  const tokenId = '3';
   const gameValue = {tag: 'test', level: 1, attack: 2.5} as any;
 
   const update = await client.nftMetadata.updateMetadata({
