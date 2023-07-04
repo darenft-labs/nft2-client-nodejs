@@ -1,9 +1,14 @@
 import {ConsumerConfig, KafkaConfig} from 'kafkajs';
+import {EventType} from '../constants';
 
 export interface KafkaOptions {
   client: KafkaConfig;
   consumerConfig: ConsumerConfig;
   eventListener: (event: EventPayload<any>) => Promise<void>;
+  filter?: {
+    events?: EventType[];
+    contracts?: string[];
+  };
 }
 
 export interface EventPayload<T> {
@@ -26,5 +31,5 @@ export interface EventMessage<T> {
   log_data: string;
   log_topics: string[];
   metadata: T;
-  type: string;
+  type: EventType;
 }

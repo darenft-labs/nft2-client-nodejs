@@ -4,7 +4,7 @@ dotenv.config({
 });
 
 import {ConsumerConfig, KafkaConfig, InstrumentationEvent} from 'kafkajs';
-import {EventConsumer} from '../src';
+import {EventConsumer, EventType} from '../src';
 import {EventPayload} from '../src/event-consumer/types/interfaces';
 
 const handleConsumerError = async (err: InstrumentationEvent<any>) => {
@@ -49,6 +49,11 @@ async function main() {
   const eventConsumer = new EventConsumer({
     client,
     consumerConfig,
+    // filter is Optional for now, will be strict in the future
+    filter: {
+      contracts: ['0x8eb1efeCFBE3FC221116963D1E996c426D0cd402'],
+      events: [EventType.NFT2_UPDATE_METADATA],
+    },
     eventListener: async (
       event: EventPayload<NFT2_LOCKED & NFT2_TRANSFERED>
     ) => {
