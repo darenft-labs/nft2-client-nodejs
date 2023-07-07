@@ -15,6 +15,8 @@ export interface Provider {
   providerAddress: string;
   providerType: number;
   url: string;
+  registryUrl: string;
+  registeredAt: Date;
 }
 
 export interface ProviderSchemaResponse {
@@ -86,7 +88,11 @@ interface NFTContract {
   updatedAt: string;
 }
 
-export interface NFTDetailResponse {
+export interface NFTExtraData {
+  providers: Provider;
+}
+
+export interface BasicNFTResponse {
   name: string;
   description: string;
   tokenId: string;
@@ -104,6 +110,8 @@ export interface NFTDetailResponse {
   nftContractAddress: string;
   nftContract: NFTContract;
 }
+
+export interface NFTDetailResponse extends BasicNFTResponse, NFTExtraData {}
 
 export interface NFTDetailRequest {
   contractAddress: string;
@@ -173,8 +181,13 @@ export interface NFTRequest {
   offset: number;
 }
 
-export interface NFTResponse {
+export interface NFTsResponse {
   items: NFTDetailResponse[];
+  total: number;
+}
+
+export interface BasicNFTsResponse {
+  items: BasicNFTResponse[];
   total: number;
 }
 

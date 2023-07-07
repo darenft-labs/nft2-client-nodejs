@@ -18,15 +18,15 @@ async function main() {
 
   const providers = await client.nft.getNFTTransactionHistory({
     filter: {
-      contractAddress: '0xe714950ec8b8f3ccf8cde35eae95dc3387e091a5',
-      tokenId: '50401',
+      contractAddress: '0x58078b56d7a1b70d86f076c7adf8a857b6547758',
+      tokenId: '2',
       chainId: 97,
     },
-    limit: 10,
+    limit: 20,
     offset: 0,
   });
 
-  console.log(JSON.stringify(providers));
+  console.log(providers);
 }
 
 main().catch(console.error);

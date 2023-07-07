@@ -9,7 +9,8 @@ import {
   NFTTransactionHistoryRequest,
   NFTTransactionHistoryResponse,
   NFTRequest,
-  NFTResponse,
+  NFTsResponse,
+  BasicNFTsResponse,
   NFTTokenURIResponse,
 } from '../types/interfaces';
 import {buildURLQuery} from '../utils';
@@ -94,8 +95,8 @@ export class NFTService {
     return result?.data;
   }
 
-  async getNFTDetails(query: NFTDetailRequest[]): Promise<NFTResponse> {
-    const result = await this.authService.auth.request<NFTResponse>({
+  async getNFTDetails(query: NFTDetailRequest[]): Promise<NFTsResponse> {
+    const result = await this.authService.auth.request<NFTsResponse>({
       url: `${this.authService.getHostPath()}/client/nfts/get-nft-details`,
       method: 'POST',
       data: {
@@ -106,14 +107,14 @@ export class NFTService {
     return result?.data;
   }
 
-  async getNFTs(query: NFTRequest): Promise<NFTResponse> {
+  async getNFTs(query: NFTRequest): Promise<BasicNFTsResponse> {
     const params = buildURLQuery({
       filter: query.filter,
       limit: query.limit,
       offset: query.offset,
     });
 
-    const result = await this.authService.auth.request<NFTResponse>({
+    const result = await this.authService.auth.request<BasicNFTsResponse>({
       url: `${this.authService.getHostPath()}/client/nfts${params}`,
       method: 'GET',
     });

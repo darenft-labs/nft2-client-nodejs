@@ -18,8 +18,8 @@ async function main() {
 
   const result = await client.nft.getNFTDetails([
     {
-      contractAddress: '0xfe7c7711c02a1d9f4c73a702fc6890ac48aafad7',
-      tokenId: '0',
+      contractAddress: '0xd78ea36059726a0c73c662cf759b120ffc281d34',
+      tokenId: '1',
       chainId: 97,
     },
   ]);
