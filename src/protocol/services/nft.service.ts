@@ -110,7 +110,7 @@ export class NFTService {
   async getNFTs(query: NFTRequest): Promise<BasicNFTsResponse> {
     const params = buildURLQuery({
       filter: query.filter,
-      limit: query.limit,
+      size: query.size,
       offset: query.offset,
     });
 
