@@ -22,7 +22,7 @@ async function main() {
       contractAddress: '0xd34a3a5d3dee29b74d20c6a38b047b181ca8538e',
       chainId: 97,
     },
-    limit: 10,
+    size: 10,
     offset: 0,
   });
 

@@ -176,8 +176,9 @@ export interface NFTRequest {
     ownerAddress?: string;
     contractAddress?: string;
     chainId?: number;
+    includeLockingVault?: boolean;
   };
-  limit: number;
+  size: number;
   offset: number;
 }
 
