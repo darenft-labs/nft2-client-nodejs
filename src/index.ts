@@ -5,6 +5,9 @@ export {AuthClient} from './auth/authclient';
 export {CredentialRequest, Credentials} from './auth/credentials';
 export {OAuth2Client} from './auth/oauth2client';
 export {TokenPayload} from './auth/loginticket';
+
+export {NFT2Client} from './nft2sclient';
+
 export {DareNFTClient} from './protocol/dareclient';
 export * from './protocol/types/interfaces';
 export * from './protocol/utils';

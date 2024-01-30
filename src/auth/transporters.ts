@@ -6,7 +6,7 @@ import axios, {
   AxiosRequestConfig,
 } from 'axios';
 
-const pack = require('../package.json');
+const pack = require('../../package.json');
 
 const PRODUCT_NAME = 'nft2-nodejs-client';
 const version = pack.version;
