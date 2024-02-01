@@ -6,13 +6,22 @@ import {NFT2Client} from '../src/nft2client';
 
 async function main() {
   const nft2Client = await testClient();
-  // console.log('nft2Client: ', nft2Client);
+
   await nft2Client.initialize().then(() => {
-    console.log('Client init success');
+    console.log('Client init success: ', nft2Client);
   });
 
+  await testDataRegistry(nft2Client);
+}
+
+const testClient = async () => {
+  const apiKey = process.env.API_KEY || '';
+  const nft2Client = new NFT2Client(apiKey);
+  return nft2Client;
+};
+
+const testContract = async (nft2Client: NFT2Client) => {
   const bnbContract = nft2Client.getNFT2Contract(97);
-  console.log('bnbContract: ', bnbContract);
   const nfts = await bnbContract.getNFTInfo(
     '0x8677f7be2456dd1161809bbff6b32ef65709fc88',
     '0',
@@ -20,12 +29,14 @@ async function main() {
     '12'
   );
   console.log('nft: ', nfts);
-}
+};
 
-const testClient = async () => {
-  const apiKey = process.env.API_KEY || '';
-  const nft2Client = new NFT2Client(apiKey);
-  return nft2Client;
+const testDataRegistry = async (nft2Client: NFT2Client) => {
+  const dataRegistry = nft2Client.getNFT2DataRegistry(97);
+  const datas = await dataRegistry.getDataRegistryInfo(
+    '0x3082253096481bb3e0db333088f41485c182f2a8'
+  );
+  console.log('data: ', datas);
 };
 
 main().catch(console.error);

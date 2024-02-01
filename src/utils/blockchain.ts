@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {ethers} from 'ethers';
-import {convertIPFSToUri} from './ipfs';
+import {convertIPFSToUri, convertUrlToIPFS} from './ipfs';
 import CONTRACT_ABI from '../abis/contract-v2.abi.json';
 import REGISTRY_ABI from '../abis/registry-v2.abi.json';
 import {LongevityStatus} from '../consts';
@@ -145,7 +145,7 @@ export const getNFTMetadata = async (
       ? (await axios.get(convertIPFSToUri(tokenURI)))?.data
       : {};
 
-    return {...metaData, tokenUri: tokenURI, tokenId};
+    return {...metaData, tokenUri: convertUrlToIPFS(tokenURI), tokenId};
   } catch (error) {
     return {};
   }
@@ -157,8 +157,8 @@ export const getDataRegistryMetadata = async (dappUri: string) => {
       ? (await axios.get(convertIPFSToUri(dappUri)))?.data
       : {};
 
-    return {...providerData, registryUrl: dappUri};
+    return {...providerData, registryUrl: convertUrlToIPFS(dappUri)};
   } catch (error) {
-    return {};
+    return {registryUrl: convertUrlToIPFS(dappUri)};
   }
 };
