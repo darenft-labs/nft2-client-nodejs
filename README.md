@@ -12,7 +12,9 @@ Install the sdk
 yarn add @darenft/nft2-client
 ```
 
-# Contact us for more information
+## Architecture
+
+![Class Diagram](./samples/NFT2Client-class.png)
 
 ## Run sample
 
