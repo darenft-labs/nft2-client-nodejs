@@ -1,13 +1,13 @@
 import {OAuth2Client} from '../auth/oauth2client';
-import {ChainConfig, ChainConfigResponse} from '../types/chain-config';
+import {ChainConfig, ChainConfigResponse} from '../types';
 
 export class APIService {
   apiKey: string;
   apiEndpoint: string;
-  auth: OAuth2Client;
+  authClient: OAuth2Client;
 
   constructor(apiKey: string, apiEndpoint?: string) {
-    this.auth = new OAuth2Client({
+    this.authClient = new OAuth2Client({
       apiKey,
       apiEndpoint,
     });
@@ -19,12 +19,10 @@ export class APIService {
    * @returns nft detail info
    */
   async getChainConfigs(): Promise<ChainConfig[]> {
-    const result = await this.auth.request<ChainConfigResponse[]>({
-      url: `${this.auth.url}/configs/internal-config`,
+    const result = await this.authClient.request<ChainConfigResponse[]>({
+      url: `${this.authClient.url}/configs/internal-config`,
       method: 'GET',
     });
-
-    console.log('result: ', result.data);
 
     if (!result.data) return [];
 
