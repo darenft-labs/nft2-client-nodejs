@@ -1,4 +1,4 @@
-import {IPFS_PUBLIC_GATEWAY} from '../consts/ipfs';
+import {IPFS_PUBLIC_GATEWAY} from '../consts';
 
 export const convertIPFSToUri = (url: string) => {
   if (url.includes('/ipfs/') || url.includes('ipfs://')) {

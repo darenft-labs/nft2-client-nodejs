@@ -33,10 +33,11 @@ const testContract = async (nft2Client: NFT2Client) => {
 
 const testDataRegistry = async (nft2Client: NFT2Client) => {
   const dataRegistry = nft2Client.getNFT2DataRegistry(97);
-  const datas = await dataRegistry.getDataRegistryInfo(
-    '0x3082253096481bb3e0db333088f41485c182f2a8'
+  const datas = await dataRegistry.getNFTMetaData(
+    '0x89033a07b597653b744e4639e7bd78701853df69',
+    '0'
   );
-  console.log('data: ', datas);
+  console.log('datas: ', datas);
 };
 
 main().catch(console.error);

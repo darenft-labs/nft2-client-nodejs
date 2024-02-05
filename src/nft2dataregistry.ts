@@ -7,6 +7,13 @@ import {
   getBlockTime,
   getDataRegistryMetadata,
 } from './utils/blockchain';
+import {
+  convertDecodedArrayToJson,
+  convertToNFTSchema,
+  decodeDataFromString,
+  getSchemaByHash,
+  separateJsonSchema,
+} from './utils/encoding-schema';
 
 export class NFT2DataRegistry {
   chainId: number;
@@ -210,5 +217,113 @@ export class NFT2DataRegistry {
       providerAddress: onchainData.dataRegistry.address,
       registeredAt: blockTime,
     } as DataRegistry;
+  }
+
+  /**
+   * @param collectionAddress collection address
+   * @param tokenId token id
+   * @returns Promise<Array NFT metadatas on dapp>
+   */
+  async getNFTMetaData(collectionAddress: string, tokenId: string) {
+    const address = collectionAddress.toLowerCase();
+    const query = gql`
+      {
+        dataRegistryNFTData(
+          orderBy: BLOCK_HEIGHT_DESC
+          filter: {
+            collection: {
+              equalTo: "${address}"
+            }
+            tokenId: { equalTo: "${tokenId}" }
+          }
+        ) {
+          nodes {
+            id
+            collection
+            tokenId
+            key
+            value
+            dataRegistry {
+              id
+              uri
+            }
+          }
+          totalCount
+        }
+      }
+    `;
+    const onchainData: {
+      dataRegistryNFTData: {
+        nodes: Array<{
+          id: string;
+          collection: string;
+          tokenId: string;
+          key: string;
+          value: string;
+          dataRegistry: {
+            id: string;
+            uri: string;
+          };
+        }>;
+        totalCount: number;
+      };
+    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+
+    let dappDatas: Array<{
+      id: string;
+      uri: string;
+      metadatas: Array<{key: string; value: string}>;
+    }> = [];
+    onchainData.dataRegistryNFTData.nodes.forEach(dapp => {
+      let available = dappDatas.find(item => item.id === dapp.dataRegistry.id);
+      if (available) {
+        available.metadatas.push({key: dapp.key, value: dapp.value});
+      } else {
+        dappDatas.push({
+          ...dapp.dataRegistry,
+          metadatas: [{key: dapp.key, value: dapp.value}],
+        });
+      }
+    });
+
+    const nftMetaDatas = await Promise.all(
+      dappDatas.map(async dapp => {
+        const providerData: DataRegistry = await getDataRegistryMetadata(
+          dapp.uri
+        );
+
+        const dappMetadataSchema = providerData.schemas;
+        if (!dappMetadataSchema || !dappMetadataSchema.jsonSchema) {
+          throw new Error(`Schema of dapp ${dapp.id} not found`);
+        }
+
+        const jsonSchema = convertToNFTSchema(dappMetadataSchema.jsonSchema);
+        const schemas = separateJsonSchema(jsonSchema) as any[];
+
+        const metadatas = dapp.metadatas.map(item => {
+          const schema = getSchemaByHash(schemas, item.key);
+          if (!schema) {
+            console.error(`Schema for key ${item.key} not found`);
+            return {};
+          }
+
+          const decodedRawValue = decodeDataFromString(schema, item.value);
+          const decodedValue = convertDecodedArrayToJson(
+            decodedRawValue['calls']
+          );
+
+          return decodedValue;
+        });
+
+        return {
+          ...providerData,
+          providerAddress: dapp.id,
+          schemas,
+          metadatas,
+        };
+      })
+    );
+
+    return nftMetaDatas;
   }
 }

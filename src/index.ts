@@ -9,9 +9,8 @@ export {TokenPayload} from './auth/loginticket';
 export {NFT2Client} from './nft2client';
 export {NFT2Contract} from './nft2contract';
 export {NFT2DataRegistry} from './nft2dataregistry';
-export * from './types';
 
-export {DareNFTClient} from './protocol/dareclient';
-export * from './protocol/types/interfaces';
-export * from './protocol/utils';
-export * from './event-consumer';
+export * from './types';
+export * from './utils/blockchain';
+export * from './utils/encoding-schema';
+export * from './utils/ipfs';
