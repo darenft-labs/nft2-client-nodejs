@@ -5,7 +5,7 @@ dotenv.config({
 import {NFT2Client} from '../src/nft2client';
 
 async function main() {
-  const nft2Client = await testClient();
+  const nft2Client = testClient();
 
   await nft2Client.initialize().then(() => {
     console.log('Client init success: ', nft2Client);
@@ -14,7 +14,7 @@ async function main() {
   await testDataRegistry(nft2Client);
 }
 
-const testClient = async () => {
+const testClient = () => {
   const apiKey = process.env.API_KEY || '';
   const nft2Client = new NFT2Client(apiKey);
   return nft2Client;
