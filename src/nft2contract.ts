@@ -24,7 +24,8 @@ export class NFT2Contract {
   }
 
   /**
-   * @param pagination Pagination data
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'deployedAt', order: 'ASC' | 'DESC'}
    * @returns Promise<{ collections: Collection[]; total: number; }>
    */
   async getCollections(pagination: Pagination, filter?: string) {
@@ -84,7 +85,8 @@ export class NFT2Contract {
 
   /**
    * @param ownerAddress owner wallet address
-   * @param pagination Pagination data
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'deployedAt', order: 'ASC' | 'DESC'}
    * @returns Promise<{ collections: Collection[]; total: number; }>
    */
   async getCollectionsByOwner(ownerAddress: string, pagination: Pagination) {
@@ -175,7 +177,8 @@ export class NFT2Contract {
 
   /**
    * @param collectionAddress collection address
-   * @param pagination Pagination data
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'mintedAt' | 'tokenId', order: 'ASC' | 'DESC'}
    * @returns Promise<{ nfts: NFT[]; total: number; }>
    */
   async getNFTsByCollection(collectionAddress: string, pagination: Pagination) {
@@ -282,7 +285,9 @@ export class NFT2Contract {
 
   /**
    * @param ownerAddress owner wallet address
-   * @param pagination Pagination data
+   * @param pagination Pagination {offset, limit, sort, filter}
+   * @param pagination.sort object {field: 'mintedAt' | 'tokenId', order: 'ASC' | 'DESC'}
+   * @param pagination.filter object {isDerivative: false | true} // default false
    * @returns Promise<{ nfts: NFT[]; total: number; }>
    */
   async getNFTsByOwner(ownerAddress: string, pagination: Pagination) {
@@ -292,12 +297,14 @@ export class NFT2Contract {
         pagination.sort.field === 'tokenId' ? 'TOKEN_ID' : 'BLOCK_HEIGHT'
       }_${pagination.sort.order}`;
     }
+    const isDerivative = pagination.filter?.isDerivative ? true : false;
+
     const query = gql`
       {
         nFTs(
           filter: {
             owner: {equalToInsensitive: "${ownerAddress}"}
-            isDerived: {isNull: true}
+            isDerived: ${isDerivative ? '{equalTo: true}' : '{isNull: true}'}
           }
           first: ${pagination.limit}
           offset: ${pagination.offset}
@@ -311,6 +318,10 @@ export class NFT2Contract {
             isDerived
             owner
             tokenId
+            underlyingNFT {
+              collection
+              tokenId
+            }
           }
           pageInfo {
             hasNextPage
@@ -329,6 +340,10 @@ export class NFT2Contract {
           isDerived: string;
           owner: string;
           tokenId: string;
+          underlyingNFT: {
+            collection: string;
+            tokenId: string;
+          };
         }>;
         pageInfo: {
           hasNextPage: boolean;
@@ -342,7 +357,11 @@ export class NFT2Contract {
     }
 
     const collectionList = [
-      ...new Set(onchainData.nFTs.nodes.map(item => item.collection)),
+      ...new Set(
+        onchainData.nFTs.nodes.map(item =>
+          isDerivative ? item.underlyingNFT.collection : item.collection
+        )
+      ),
     ];
 
     const collectionQuery = gql`
@@ -392,15 +411,18 @@ export class NFT2Contract {
       onchainData.nFTs.nodes.map(async item => {
         const metaData = await getNFTMetadata(
           this.provider,
-          item.collection,
-          item.tokenId
+          isDerivative ? item.underlyingNFT.collection : item.collection,
+          isDerivative ? item.underlyingNFT.tokenId : item.tokenId
         );
 
         const blockTime = await getBlockTime(this.provider, item.blockHeight);
 
-        const collectionInfo = collectionInfos.find(
-          collection => collection.contractAddress === item.collection
-        );
+        const collectionInfo = collectionInfos.find(collection => {
+          const address = isDerivative
+            ? item.underlyingNFT.collection
+            : item.collection;
+          return collection.contractAddress == address;
+        });
 
         return {
           name: metaData.name,
@@ -411,10 +433,21 @@ export class NFT2Contract {
           ownerAddress: item.owner,
           imageUrl: metaData.image ?? null,
           tokenUri: metaData.tokenUri,
-          type: NFTContractType.Original,
+          type: isDerivative
+            ? NFTContractType.Derivative
+            : NFTContractType.Original,
           status: getNFTStatus(item.isBurned),
           mintedAt: blockTime,
           collection: collectionInfo,
+          ...(isDerivative
+            ? {
+                original: {
+                  collectionAddress: item.underlyingNFT.collection,
+                  tokenId: item.underlyingNFT.tokenId,
+                },
+                dataRegistry: {providerAddress: item.collection},
+              }
+            : {}),
         } as NFT;
       })
     );
@@ -425,7 +458,8 @@ export class NFT2Contract {
   /**
    * @param originCollectionAddress collection address of original
    * @param originTokenId token id of original
-   * @param pagination Pagination data
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'mintedAt', order: 'ASC' | 'DESC'}
    * @returns Promise<{ nfts: NFT[]; total: number; }>
    */
   async getNFTsByOriginal(

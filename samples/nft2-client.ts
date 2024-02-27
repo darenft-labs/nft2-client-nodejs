@@ -11,7 +11,7 @@ async function main() {
     console.log('Client init success: ', nft2Client);
   });
 
-  await testDataRegistry(nft2Client);
+  await testContract(nft2Client);
 }
 
 const testClient = () => {
@@ -22,13 +22,11 @@ const testClient = () => {
 
 const testContract = async (nft2Client: NFT2Client) => {
   const bnbContract = nft2Client.getNFT2Contract(97);
-  const nfts = await bnbContract.getNFTInfo(
-    '0x8677f7be2456dd1161809bbff6b32ef65709fc88',
-    '0',
-    '0x63d1db1730eb531b86623a9f9b26f3e85e30a312',
-    '12'
+  const nfts = await bnbContract.getNFTsByOwner(
+    '0xC90146E70c9B2bf2f2B7Fe14979E73637C40fE4D',
+    {limit: 10, offset: 0, filter: {isDerivative: true}}
   );
-  console.log('nft: ', nfts);
+  console.log('nft: ', nfts.nfts);
 };
 
 const testDataRegistry = async (nft2Client: NFT2Client) => {
