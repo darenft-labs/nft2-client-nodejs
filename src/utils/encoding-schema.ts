@@ -51,14 +51,14 @@ export const separateJsonSchema = (jsonSchema: any): any[] => {
   }));
 };
 
+export const encodeKeyByHash = (key: string) => {
+  return utils.keccak256(utils.toUtf8Bytes(key));
+};
+
 export const encodeDataFromJsonSchema = (jsonSchema: any, data: any) => {
   const components = convertJsonSchemaToParamType(jsonSchema.properties);
 
-  const DATA_STRUCT = ParamType.fromObject({
-    components: components,
-    name: 'calls',
-    type: 'tuple',
-  });
+  const DATA_STRUCT = ParamType.fromObject(components[0]);
 
   const abi = ethers.utils.defaultAbiCoder;
 
@@ -70,11 +70,7 @@ export const encodeDataFromJsonSchema = (jsonSchema: any, data: any) => {
 export const decodeDataFromString = (jsonSchema: any, data: string) => {
   const components = convertJsonSchemaToParamType(jsonSchema.properties);
 
-  const DATA_STRUCT = ParamType.fromObject({
-    components: components,
-    name: 'calls',
-    type: 'tuple',
-  });
+  const DATA_STRUCT = ParamType.fromObject(components[0]);
 
   const abi = ethers.utils.defaultAbiCoder;
 

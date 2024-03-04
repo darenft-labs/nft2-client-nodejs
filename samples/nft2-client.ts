@@ -22,11 +22,11 @@ const testClient = () => {
 
 const testContract = async (nft2Client: NFT2Client) => {
   const bnbContract = nft2Client.getNFT2Contract(97);
-  const nfts = await bnbContract.getNFTsByOwner(
-    '0xC90146E70c9B2bf2f2B7Fe14979E73637C40fE4D',
-    {limit: 10, offset: 0, filter: {isDerivative: true}}
+  const nfts = await bnbContract.getNFTInfo(
+    '0xca3991a64c99248085f354f05a8add010881fb9e',
+    '7'
   );
-  console.log('nft: ', nfts.nfts);
+  console.log('nft: ', nfts);
 };
 
 const testDataRegistry = async (nft2Client: NFT2Client) => {

@@ -260,7 +260,7 @@ export class NFT2Contract {
           description: nftMetaData?.description,
           tokenId: nft.tokenId,
           chainId: this.chainId,
-          // creatorAddress: nft.owner,
+          creatorAddress: onchainData.collection.owner,
           ownerAddress: nft.owner,
           imageUrl: nftMetaData.image ?? null,
           tokenUri: nftMetaData.tokenUri,
@@ -417,6 +417,15 @@ export class NFT2Contract {
 
         const blockTime = await getBlockTime(this.provider, item.blockHeight);
 
+        const derivedInfo = isDerivative
+          ? await getDerivedInfo(
+              this.provider,
+              item.collection,
+              item.underlyingNFT.collection,
+              item.underlyingNFT.tokenId
+            )
+          : null;
+
         const collectionInfo = collectionInfos.find(collection => {
           const address = isDerivative
             ? item.underlyingNFT.collection
@@ -429,18 +438,21 @@ export class NFT2Contract {
           description: metaData.description,
           tokenId: item.tokenId,
           chainId: this.chainId,
-          // creatorAddress: item.owner,
+          creatorAddress: collectionInfo?.ownerAddress,
           ownerAddress: item.owner,
           imageUrl: metaData.image ?? null,
           tokenUri: metaData.tokenUri,
           type: isDerivative
             ? NFTContractType.Derivative
             : NFTContractType.Original,
-          status: getNFTStatus(item.isBurned),
+          status: getNFTStatus(item.isBurned, derivedInfo ?? undefined),
           mintedAt: blockTime,
           collection: collectionInfo,
           ...(isDerivative
             ? {
+                openAt: derivedInfo?.startTime,
+                closeAt: derivedInfo?.endTime,
+                royalties: derivedInfo?.royaltyInfo.rate,
                 original: {
                   collectionAddress: item.underlyingNFT.collection,
                   tokenId: item.underlyingNFT.tokenId,
@@ -591,10 +603,10 @@ export class NFT2Contract {
   }
 
   /**
-   * @param collectionAddress collection address
-   * @param tokenId token id
-   * @param providerAddress data registry which derived nft
-   * @param derivativeTokenId derived token id
+   * @param collectionAddress collection address or derived address
+   * @param tokenId token id or derived token id
+   * @param providerAddress (Deprecated)
+   * @param derivativeTokenId (Deprecated)
    * @returns Promise<{nft: NFT, derivedAccount: derived account}>
    */
   async getNFTInfo(
@@ -603,24 +615,51 @@ export class NFT2Contract {
     providerAddress?: string,
     derivativeTokenId?: string
   ) {
-    const isDerivative = !!providerAddress && !!derivativeTokenId;
     const address = collectionAddress.toLowerCase();
-    const nftKey = isDerivative
-      ? `${providerAddress.toLowerCase()}-${derivativeTokenId}`
-      : `${address}-${tokenId}`;
+    const nftKey = `${address}-${tokenId}`;
 
-    const query = gql`
+    const nftQuery = gql`
       {
         nFT(id: "${nftKey}") {
-          id
           blockHeight
           collection
           isBurned
           isDerived
           owner
           tokenId
+          underlyingNFT {
+            collection
+            tokenId
+          }
         }
-        collection(id: "${address}") {
+      }
+    `;
+    const nftOnchainData: {
+      nFT: {
+        blockHeight: string;
+        collection: string;
+        isBurned: string;
+        isDerived: string;
+        owner: string;
+        tokenId: string;
+        underlyingNFT: {
+          collection: string;
+          tokenId: string;
+        };
+      };
+    } = await this.subqueryService.queryDataOnChain(nftQuery, this.chainId);
+
+    if (!nftOnchainData.nFT) {
+      throw new Error('NFT not found');
+    }
+
+    const isDerivative =
+      nftOnchainData.nFT.isDerived && !!nftOnchainData.nFT.underlyingNFT;
+    const underlyingNFT = nftOnchainData.nFT.underlyingNFT;
+
+    const query = gql`
+      {
+        collection(id: "${isDerivative ? underlyingNFT.collection : address}") {
           owner
           kind
         }
@@ -628,26 +667,25 @@ export class NFT2Contract {
           first: 1
           offset: 0
           filter: {
-            underlyingCollection: {equalTo: "${address}"}
-            underlyingTokenId: {equalTo: "${tokenId}"}
+            underlyingCollection: {equalTo: "${
+              isDerivative ? underlyingNFT.collection : address
+            }"}
+            underlyingTokenId: {equalTo: "${
+              isDerivative ? underlyingNFT.tokenId : tokenId
+            }"}
           }
         ) {
           nodes {
             address
           }
         }
+        dataRegistry(id: "${address}") {
+          address
+          uri
+        }
       }
     `;
     const onchainData: {
-      nFT: {
-        id: string;
-        blockHeight: string;
-        collection: string;
-        isBurned: string;
-        isDerived: string;
-        owner: string;
-        tokenId: string;
-      };
       collection: {
         owner: string;
         kind: number;
@@ -657,44 +695,44 @@ export class NFT2Contract {
           address: string;
         }>;
       };
+      dataRegistry: {address: string; uri: string};
     } = await this.subqueryService.queryDataOnChain(query, this.chainId);
 
-    if (!onchainData.nFT) {
-      throw new Error('NFT not found');
-    }
+    const collectionInfo = await getCollectionInfo(
+      this.provider,
+      isDerivative ? underlyingNFT.collection : address
+    );
 
-    const collectionInfo = await getCollectionInfo(this.provider, address);
-
-    const nftMetaData = await getNFTMetadata(this.provider, address, tokenId);
+    const nftMetaData = await getNFTMetadata(
+      this.provider,
+      isDerivative ? underlyingNFT.collection : address,
+      isDerivative ? underlyingNFT.tokenId : tokenId
+    );
 
     const blockTime = await getBlockTime(
       this.provider,
-      onchainData.nFT.blockHeight
+      nftOnchainData.nFT.blockHeight
     );
 
     const derivedInfo = isDerivative
-      ? await getDerivedInfo(this.provider, providerAddress, address, tokenId)
+      ? await getDerivedInfo(
+          this.provider,
+          address,
+          underlyingNFT.collection,
+          underlyingNFT.tokenId
+        )
       : null;
 
     let dataRegistry: DataRegistry | null = null;
-    if (isDerivative) {
-      const dappQuery = gql`
-        {
-          dataRegistry(id: "${providerAddress}") {
-            address
-            uri
-          }
-        }
-      `;
-      const dappData: {
-        dataRegistry: {address: string; uri: string};
-      } = await this.subqueryService.queryDataOnChain(dappQuery, this.chainId);
-
+    if (isDerivative && onchainData.dataRegistry) {
       const dappMetadata = await getDataRegistryMetadata(
-        dappData.dataRegistry.uri
+        onchainData.dataRegistry.uri
       );
 
-      dataRegistry = {...dappMetadata, providerAddress: providerAddress};
+      dataRegistry = {
+        ...dappMetadata,
+        providerAddress: onchainData.dataRegistry.address,
+      };
     }
 
     return {
@@ -703,22 +741,22 @@ export class NFT2Contract {
         description: nftMetaData?.description,
         tokenId: tokenId,
         chainId: this.chainId,
-        // creatorAddress: onchainData.nFT.owner,
-        ownerAddress: onchainData.nFT.owner,
+        creatorAddress: onchainData.collection.owner,
+        ownerAddress: nftOnchainData.nFT.owner,
         imageUrl: nftMetaData.image ?? null,
         tokenUri: nftMetaData.tokenUri,
         type: isDerivative
           ? NFTContractType.Derivative
           : NFTContractType.Original,
         status: getNFTStatus(
-          onchainData.nFT.isBurned,
+          nftOnchainData.nFT.isBurned,
           derivedInfo ?? undefined
         ),
         mintedAt: blockTime,
         collection: {
           name: collectionInfo.name,
           symbol: collectionInfo.symbol,
-          contractAddress: address,
+          contractAddress: isDerivative ? underlyingNFT.collection : address,
           ownerAddress: onchainData.collection.owner,
           creatorAddress: onchainData.collection.owner,
           chainId: this.chainId,
@@ -727,13 +765,13 @@ export class NFT2Contract {
         royalties: collectionInfo.royaltyInfo.rate,
         ...(isDerivative && derivedInfo
           ? {
-              tokenId: derivativeTokenId,
+              tokenId: nftOnchainData.nFT.tokenId,
               openAt: derivedInfo.startTime,
               closeAt: derivedInfo.endTime,
               royalties: derivedInfo.royaltyInfo.rate,
               original: {
-                collectionAddress: address,
-                tokenId: tokenId,
+                collectionAddress: underlyingNFT.collection,
+                tokenId: underlyingNFT.tokenId,
               },
               dataRegistry: dataRegistry,
             }

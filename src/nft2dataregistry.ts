@@ -308,9 +308,7 @@ export class NFT2DataRegistry {
           }
 
           const decodedRawValue = decodeDataFromString(schema, item.value);
-          const decodedValue = convertDecodedArrayToJson(
-            decodedRawValue['calls']
-          );
+          const decodedValue = convertDecodedArrayToJson(decodedRawValue);
 
           return decodedValue;
         });
