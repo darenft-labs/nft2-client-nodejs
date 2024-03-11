@@ -2,18 +2,18 @@
 
 This is DareNFT 2.0 Protocol's officially supported node.js client library.
 
-[![License](https://img.shields.io/npm/l/@cosmostation/cosmosjs.svg)](https://www.npmjs.com/package/@darenft/nft2-client)
+[![License](https://img.shields.io/npm/l/@cosmostation/cosmosjs.svg)](https://www.npmjs.com/package/@darenft-labs/nft2-client)
 
 ## Installing
 
 Install by yarn
 ```
-yarn add @darenft/nft2-client
+yarn add @darenft-labs/nft2-client
 ```
 
 or using npm
 ```
-npm add @darenft/nft2-client
+npm add @darenft-labs/nft2-client
 ```
 
 **Note:** node version should be greater than 16.14
@@ -21,6 +21,8 @@ npm add @darenft/nft2-client
 ## Quick start
 
 ```js
+import { NFT2Client } from "@darenft-labs/nft2-client";
+
 const apiKey = 'xxx'; // must get from NT2 console 
 const apiEndpoint = 'https://protocol-api.nft2scan.com'; // API endpoint, optional
 const nft2Client = new NFT2Client(apiKey, apiEndpoint);
