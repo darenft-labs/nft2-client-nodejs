@@ -70,12 +70,15 @@ export const checkIsDerivable = async (
     provider
   );
 
-  const isDerivable: boolean = await registryContract.isDerivable(
-    collection,
-    tokenId
-  );
-
-  return isDerivable;
+  try {
+    const isDerivable: boolean = await registryContract.isDerivable(
+      collection,
+      tokenId
+    );
+    return isDerivable;
+  } catch (error) {
+    return false;
+  }
 };
 
 export const getDerivedInfo = async (

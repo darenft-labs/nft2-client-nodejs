@@ -267,6 +267,7 @@ export class NFT2Contract {
           type: NFTContractType.Original,
           status: getNFTStatus(nft.isBurned),
           mintedAt: blockTime,
+          royalties: collectionInfo.royaltyInfo.rate,
           collection: {
             name: collectionInfo.name,
             symbol: collectionInfo.symbol,
@@ -275,6 +276,7 @@ export class NFT2Contract {
             creatorAddress: onchainData.collection.owner,
             chainId: this.chainId,
             kind: onchainData.collection.kind,
+            defaultRoyalty: collectionInfo.royaltyInfo.rate,
           },
         } as NFT;
       })
@@ -403,6 +405,7 @@ export class NFT2Contract {
           creatorAddress: collection.owner,
           chainId: this.chainId,
           kind: collection.kind,
+          defaultRoyalty: collectionInfo.royaltyInfo.rate,
         } as Collection;
       })
     );
@@ -448,6 +451,7 @@ export class NFT2Contract {
           status: getNFTStatus(item.isBurned, derivedInfo ?? undefined),
           mintedAt: blockTime,
           collection: collectionInfo,
+          royalties: collectionInfo?.defaultRoyalty,
           ...(isDerivative
             ? {
                 openAt: derivedInfo?.startTime,

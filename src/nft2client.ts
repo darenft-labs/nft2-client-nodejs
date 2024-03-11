@@ -76,4 +76,11 @@ export class NFT2Client {
   getNFT2DataRegistry(chainId: number): NFT2DataRegistry {
     return this.registryClients[chainId];
   }
+
+  /**
+   * @returns NFT2 Protocol API instance
+   */
+  getAPIService(): APIService {
+    return this.apiService;
+  }
 }
