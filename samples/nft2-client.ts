@@ -3,7 +3,7 @@ dotenv.config({
   path: __dirname + '/.env',
 });
 import {NFT2Client} from '../src/nft2client';
-import {buildPreDefineMerkleTree} from '../src';
+import {utils} from '../src';
 
 async function main() {
   const nft2Client = testClient();
@@ -59,7 +59,7 @@ const testAPIProtocol = async (nft2Client: NFT2Client) => {
 };
 
 const testMerkleTree = () => {
-  const data = buildPreDefineMerkleTree([
+  const data = utils.buildPreDefineMerkleTree([
     {
       tokenId: 5,
       tokenUri: 'token_uri_1',
