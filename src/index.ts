@@ -11,6 +11,4 @@ export {NFT2Contract} from './nft2contract';
 export {NFT2DataRegistry} from './nft2dataregistry';
 
 export * from './types';
-export * from './utils/blockchain';
-export * from './utils/encoding-schema';
-export * from './utils/ipfs';
+export * from './utils';

@@ -4,6 +4,10 @@ import {
   ChainConfigResponse,
   ClaimTokenUriInfoResponse,
   FreemintInfoResponse,
+  JsonUriMetadata,
+  PresignImageData,
+  PresignedImageResponse,
+  UploadJsonUriRespone,
 } from '../types';
 
 export class APIService {
@@ -85,5 +89,39 @@ export class APIService {
     });
 
     return result?.data ? result.data : {};
+  }
+
+  /**
+   * @param data JsonUriMetadata
+   * @param data.items array object uri data
+   * @returns array uploaded tokenUri
+   */
+  async uploadJSONUriInfo(
+    data: JsonUriMetadata
+  ): Promise<UploadJsonUriRespone[]> {
+    const result = await this.authClient.request<UploadJsonUriRespone[]>({
+      url: `${this.authClient.url}/upload/json-uri`,
+      method: 'POST',
+      data: data,
+    });
+
+    return result?.data ? result.data : [];
+  }
+
+  /**
+   * @param data PresignImageData
+   * @param data.files array presign info (mimeType, fileName)
+   * @returns object with array presigned url
+   */
+  async generatePresignedImage(
+    data: PresignImageData
+  ): Promise<PresignedImageResponse> {
+    const result = await this.authClient.request<PresignedImageResponse>({
+      url: `${this.authClient.url}/upload/presigned-image`,
+      method: 'POST',
+      data: data,
+    });
+
+    return result?.data ? result.data : {urls: []};
   }
 }

@@ -3,6 +3,7 @@ dotenv.config({
   path: __dirname + '/.env',
 });
 import {NFT2Client} from '../src/nft2client';
+import {buildPreDefineMerkleTree} from '../src';
 
 async function main() {
   const nft2Client = testClient();
@@ -11,7 +12,8 @@ async function main() {
     console.log('Client init success: ', nft2Client);
   });
 
-  await testAPIProtocol(nft2Client);
+  // await testAPIProtocol(nft2Client);
+  testMerkleTree();
 }
 
 const testClient = () => {
@@ -41,12 +43,42 @@ const testDataRegistry = async (nft2Client: NFT2Client) => {
 const testAPIProtocol = async (nft2Client: NFT2Client) => {
   const apiProtocol = nft2Client.getAPIService();
 
-  const datas = await apiProtocol.getClaimTokenUriInfo(
-    97,
-    '0xca8142cbda9d07560196cbaa451765f7f3d0f42a',
-    '5'
-  );
+  const datas = await apiProtocol.generatePresignedImage({
+    files: [
+      {
+        fileName: 'file1.xyz',
+        mimeType: 'image/png',
+      },
+      {
+        fileName: 'file2.abc',
+        mimeType: 'image/jpeg',
+      },
+    ],
+  });
   console.log('datas: ', datas);
+};
+
+const testMerkleTree = () => {
+  const data = buildPreDefineMerkleTree([
+    {
+      tokenId: 5,
+      tokenUri: 'token_uri_1',
+    },
+    {
+      tokenId: 4,
+      tokenUri: 'token_uri_2',
+    },
+    {
+      tokenId: 3,
+      tokenUri: 'token_uri_3',
+    },
+    {
+      tokenId: 2,
+      tokenUri: 'token_uri_4',
+    },
+  ]);
+
+  console.log('data: ', data);
 };
 
 main().catch(console.error);
