@@ -24,8 +24,7 @@ npm add @darenft-labs/nft2-client
 import { NFT2Client } from "@darenft-labs/nft2-client";
 
 const apiKey = 'xxx'; // must get from NT2 console 
-const apiEndpoint = 'https://protocol-api.nft2scan.com'; // API endpoint, optional
-const nft2Client = new NFT2Client(apiKey, apiEndpoint);
+const nft2Client = new NFT2Client(apiKey);
 
 await nft2Client.initialize().then(() => {
     console.log('Client init success: ', nft2Client);
