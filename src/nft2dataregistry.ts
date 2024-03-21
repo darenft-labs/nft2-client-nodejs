@@ -226,15 +226,48 @@ export class NFT2DataRegistry {
    */
   async getNFTMetaData(collectionAddress: string, tokenId: string) {
     const address = collectionAddress.toLowerCase();
+    const queryNFT = gql`
+      {
+        nFT(id: "${address}-${tokenId}") {
+          collection
+          tokenId
+          underlyingNFT {
+            collection
+            tokenId
+          }
+        }
+      }
+    `;
+    const nftData: {
+      nFT: {
+        collection: string;
+        tokenId: string;
+        underlyingNFT?: {
+          collection: string;
+          tokenId: string;
+        };
+      };
+    } = await this.subqueryService.queryDataOnChain(queryNFT, this.chainId);
+
+    const isDerivative = nftData.nFT?.underlyingNFT;
+
+    const originCollection = isDerivative
+      ? nftData.nFT.underlyingNFT!.collection
+      : address;
+    const originTokenId = isDerivative
+      ? nftData.nFT.underlyingNFT!.tokenId
+      : tokenId;
+
     const query = gql`
       {
         dataRegistryNFTData(
           orderBy: BLOCK_HEIGHT_DESC
           filter: {
             collection: {
-              equalTo: "${address}"
+              equalTo: "${originCollection}"
             }
-            tokenId: { equalTo: "${tokenId}" }
+            tokenId: { equalTo: "${originTokenId}" }
+            ${isDerivative ? `dataRegistryId: { equalTo: "${address}" }` : ''}
           }
         ) {
           nodes {
@@ -307,9 +340,7 @@ export class NFT2DataRegistry {
             return {};
           }
 
-          const decodedRawValue = decodeDataFromString(schema, item.value);
-          const decodedValue = convertDecodedArrayToJson(decodedRawValue);
-
+          const decodedValue = decodeDataFromString(schema, item.value);
           return decodedValue;
         });
 

@@ -58,6 +58,12 @@ export const encodeKeyByHash = (key: string) => {
 export const encodeDataFromJsonSchema = (jsonSchema: any, data: any) => {
   const components = convertJsonSchemaToParamType(jsonSchema.properties);
 
+  let encodeData = data;
+  if (components[0].type === 'int256') {
+    // number float
+    encodeData = formatFloatData(data);
+  }
+
   const DATA_STRUCT = ParamType.fromObject(components[0]);
 
   const abi = ethers.utils.defaultAbiCoder;
@@ -76,7 +82,25 @@ export const decodeDataFromString = (jsonSchema: any, data: string) => {
 
   const DATA_VALUE = abi.decode([DATA_STRUCT], data);
 
-  return DATA_VALUE;
+  const isPremitiveFloat = components[0].type === 'int256'; // number float
+
+  return convertDecodedArrayToJson(DATA_VALUE, isPremitiveFloat);
+};
+
+function isFloat(n: number) {
+  return Number(n) === n && n % 1 !== 0;
+}
+
+export const formatFloatData = (data: any): any => {
+  const formattedData = JSON.parse(JSON.stringify(data), (key, value) => {
+    if (typeof value === 'number' && isFloat(value)) {
+      return value < 0.000001 // it will convert to 1e-7
+        ? ethers.utils.parseEther(value.toFixed(18))
+        : ethers.utils.parseEther(value.toString());
+    }
+    return value;
+  });
+  return formattedData;
 };
 
 export const convertJsonSchemaToParamType = (jsonSchema: any): any => {
@@ -144,26 +168,30 @@ export const convertType = (jsonType: string): string => {
   return type;
 };
 
-export const convertDecodedArrayToJson = (decodedArray: Result): any => {
+export const convertDecodedArrayToJson = (
+  decodedArray: Result,
+  isPremitiveFloat?: boolean
+): any => {
   const keys = Object.keys(decodedArray);
   keys.splice(0, decodedArray.length);
 
   const result = {} as any;
   keys.forEach(key => {
     const value = decodedArray[key];
-    return (result[key] = convertValue(value));
+    return (result[key] = convertValue(value, isPremitiveFloat));
   });
 
   return result;
 };
 
-export const convertValue = (value: any): any => {
+export const convertValue = (value: any, isPremitiveFloat?: boolean): any => {
   if (isAddress(value)) {
     return value.toLowerCase();
   }
 
   if (value instanceof BigNumber) {
-    return value.toString();
+    if (isPremitiveFloat) return parseFloat(ethers.utils.formatEther(value));
+    else return parseInt(value.toString());
   }
 
   if (Array.isArray(value)) {
