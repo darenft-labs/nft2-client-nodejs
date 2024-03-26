@@ -23,21 +23,20 @@ const testClient = () => {
 };
 
 const testContract = async (nft2Client: NFT2Client) => {
-  const bnbContract = nft2Client.getNFT2Contract(97);
+  const bnbContract = nft2Client.getNFT2Contract(43113);
   const nfts = await bnbContract.getNFTInfo(
-    '0xca3991a64c99248085f354f05a8add010881fb9e',
-    '7'
+    '0x336a26366f2665ef6e8bcde7283d6bcce3150867',
+    '24'
   );
   console.log('nft: ', nfts);
 };
 
 const testDataRegistry = async (nft2Client: NFT2Client) => {
   const dataRegistry = nft2Client.getNFT2DataRegistry(97);
-  const datas = await dataRegistry.getNFTMetaData(
-    '0x90a0bf2a49acd858956cc39e1e8cb83038f96b03',
-    '1'
+  const datas = await dataRegistry.getDataRegistryByOwner(
+    '0xCa4597167270D2AD6931C35DEA4c59837E1A9E74'
   );
-  console.log('datas: ', datas[0]);
+  console.log('datas: ', datas);
 };
 
 const testAPIProtocol = async (nft2Client: NFT2Client) => {

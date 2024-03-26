@@ -148,7 +148,12 @@ export const getNFTMetadata = async (
       ? (await axios.get(convertIPFSToUri(tokenURI)))?.data
       : {};
 
-    return {...metaData, tokenUri: convertUrlToIPFS(tokenURI), tokenId};
+    return {
+      ...metaData,
+      image: convertIPFSToUri(metaData.image ?? ''),
+      tokenUri: convertUrlToIPFS(tokenURI ?? ''),
+      tokenId,
+    };
   } catch (error) {
     return {};
   }
@@ -160,8 +165,12 @@ export const getDataRegistryMetadata = async (dappUri: string) => {
       ? (await axios.get(convertIPFSToUri(dappUri)))?.data
       : {};
 
-    return {...providerData, registryUrl: convertUrlToIPFS(dappUri)};
+    return {
+      ...providerData,
+      url: convertIPFSToUri(providerData.url ?? ''),
+      registryUrl: convertUrlToIPFS(dappUri ?? ''),
+    };
   } catch (error) {
-    return {registryUrl: convertUrlToIPFS(dappUri)};
+    return {registryUrl: convertUrlToIPFS(dappUri ?? '')};
   }
 };
