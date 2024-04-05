@@ -8,7 +8,6 @@ import {
   getDataRegistryMetadata,
 } from './utils/blockchain';
 import {
-  convertDecodedArrayToJson,
   convertToNFTSchema,
   decodeDataFromString,
   getSchemaByHash,
@@ -325,7 +324,13 @@ export class NFT2DataRegistry {
           dapp.uri
         );
 
-        const dappMetadataSchema = providerData.schemas;
+        const defaultSchema = providerData.schemas as any;
+        const collectionSchemas = (providerData as any).collectionSchemas || [];
+        let dappMetadataSchema = collectionSchemas.find(
+          (schema: any) => schema.name === originCollection
+        );
+        if (!dappMetadataSchema) dappMetadataSchema = defaultSchema;
+
         if (!dappMetadataSchema || !dappMetadataSchema.jsonSchema) {
           throw new Error(`Schema of dapp ${dapp.id} not found`);
         }
@@ -333,7 +338,7 @@ export class NFT2DataRegistry {
         const jsonSchema = convertToNFTSchema(dappMetadataSchema.jsonSchema);
         const schemas = separateJsonSchema(jsonSchema) as any[];
 
-        const metadatas = dapp.metadatas.map(item => {
+        const decodeDatas = dapp.metadatas.map(item => {
           const schema = getSchemaByHash(schemas, item.key);
           if (!schema) {
             console.error(`Schema for key ${item.key} not found`);
@@ -344,10 +349,14 @@ export class NFT2DataRegistry {
           return decodedValue;
         });
 
+        const metadatas = schemas.map(schema => {
+          const data = decodeDatas.find(item => schema.key in item);
+          return data ?? {[schema.key]: null};
+        });
+
         return {
           ...providerData,
           providerAddress: dapp.id,
-          schemas,
           metadatas,
         };
       })

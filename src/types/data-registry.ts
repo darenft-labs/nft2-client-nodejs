@@ -9,7 +9,10 @@ export interface DataRegistry {
   registeredAt: Date | null;
   schemas: {
     name: string;
-    version: number;
     jsonSchema: object;
   };
+  collectionSchemas: {
+    name: string;
+    jsonSchema: object;
+  }[];
 }
