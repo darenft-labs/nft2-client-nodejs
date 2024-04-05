@@ -2,7 +2,6 @@ node_modules
 build/
 .idea
 .vscode
-docs/
 npm-debug.log
 .coverage
 coverage

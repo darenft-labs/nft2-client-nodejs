@@ -65,7 +65,7 @@ console.log('datas: ', datas);
 
 ## Architecture
 
-![Class Diagram](./samples/NFT2Client-class.png)
+- [Class diagram](./docs/class-diagram.md)
 
 ## Run sample
 
