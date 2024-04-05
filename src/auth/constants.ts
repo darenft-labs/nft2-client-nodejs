@@ -1,4 +1,4 @@
-export const DEFAULT_HOST_URL = "https://protocol-api-stg.nft2scan.com";
+export const DEFAULT_HOST_URL = 'https://protocol-api.nft2scan.com';
 
 export const ERROR_CODE = {
   UNAUTHORIZED: 401,
