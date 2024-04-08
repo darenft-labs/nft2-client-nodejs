@@ -97,9 +97,10 @@ export class NFT2Contract {
 
   /**
    * @param collectionAddress collection address
+   * @param isFullInfo optional, addition info image, totalNfts, totalOwners
    * @returns Promise<Collection>
    */
-  async getCollectionInfo(collectionAddress: string) {
+  async getCollectionInfo(collectionAddress: string, isFullInfo?: boolean) {
     const address = collectionAddress.toLowerCase();
     const query = gql`
       {
@@ -109,15 +110,6 @@ export class NFT2Contract {
           id
           owner
           kind
-        }
-        nFTs(
-          filter: {collection: {equalToInsensitive: "${address}"}}
-          distinct: OWNER
-        ) {
-          nodes {
-            owner
-          }
-          totalCount
         }
       }
     `;
@@ -129,32 +121,18 @@ export class NFT2Contract {
         owner: string;
         kind: number;
       };
-      nFTs: {
-        nodes: Array<{
-          owner: string;
-        }>;
-        totalCount: number;
-      };
     } = await this.subqueryService.queryDataOnChain(query, this.chainId);
 
     const collection = onchainData.collection;
-
-    const firstNftData =
-      onchainData.nFTs.totalCount > 0
-        ? await getNFTMetadata(this.provider, collection.address, '0')
-        : null;
-
-    const nftInfo = {
-      address: collection.address,
-      totalNfts: onchainData.nFTs.totalCount,
-      totalOwners: onchainData.nFTs.nodes.length,
-      firstNft: firstNftData,
-    };
 
     const collectionInfo = await getCollectionInfo(
       this.provider,
       collection.address
     );
+
+    const nftInfo = isFullInfo
+      ? await this.getCollectionNFTsInfo(collectionAddress)
+      : ({} as any);
 
     const blockTime = await getBlockTime(this.provider, collection.blockHeight);
 
@@ -168,11 +146,54 @@ export class NFT2Contract {
       chainId: this.chainId,
       type: NFTContractType.Original, // always original
       deployedAt: blockTime,
-      totalNfts: nftInfo.totalNfts,
-      totalOwners: nftInfo.totalOwners,
+      totalNfts: nftInfo.totalNfts ?? null,
+      totalOwners: nftInfo.totalOwners ?? null,
       kind: collection.kind,
       defaultRoyalty: collectionInfo.royaltyInfo.rate,
     } as Collection;
+  }
+
+  /**
+   * @param collectionAddress collection address
+   * @returns Promise<{
+      collectionAddress: string,
+      totalNfts: number,
+      totalOwners: number,
+      firstNft: nftMetaData | null ,
+    }>
+   */
+  async getCollectionNFTsInfo(collectionAddress: string) {
+    const address = collectionAddress.toLowerCase();
+    const query = gql`
+      {
+        nFTs(
+          filter: {collection: { equalTo: "${address}"}}
+        ) {
+          groupedAggregates(groupBy: OWNER) {
+            keys
+          }
+          totalCount
+        }
+      }
+    `;
+    const onchainData: {
+      nFTs: {
+        groupedAggregates: Array<any>;
+        totalCount: number;
+      };
+    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+
+    const firstNftData =
+      onchainData.nFTs.totalCount > 0
+        ? await getNFTMetadata(this.provider, address, '0')
+        : null;
+
+    return {
+      collectionAddress: address,
+      totalNfts: onchainData.nFTs.totalCount,
+      totalOwners: onchainData.nFTs.groupedAggregates.length,
+      firstNft: firstNftData,
+    };
   }
 
   /**

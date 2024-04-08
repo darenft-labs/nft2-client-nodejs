@@ -12,21 +12,24 @@ async function main() {
     console.log('Client init success: ', nft2Client);
   });
 
-  await testDataRegistry(nft2Client);
+  await testContract(nft2Client);
   // testMerkleTree();
 }
 
 const testClient = () => {
   const apiKey = process.env.API_KEY || '';
-  const nft2Client = new NFT2Client(apiKey);
+  const nft2Client = new NFT2Client(
+    apiKey,
+    'https://protocol-api-stg.nft2scan.com'
+  );
   return nft2Client;
 };
 
 const testContract = async (nft2Client: NFT2Client) => {
-  const bnbContract = nft2Client.getNFT2Contract(43113);
-  const nfts = await bnbContract.getNFTInfo(
-    '0x336a26366f2665ef6e8bcde7283d6bcce3150867',
-    '24'
+  const bnbContract = nft2Client.getNFT2Contract(43114);
+  const nfts = await bnbContract.getCollectionInfo(
+    '0x6edb9c74f1f495ffacceb207a5f947961698bff8',
+    true
   );
   console.log('nft: ', nfts);
 };
