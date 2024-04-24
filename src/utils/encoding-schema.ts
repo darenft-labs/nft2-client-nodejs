@@ -1,32 +1,6 @@
 import {ethers, utils, BigNumber} from 'ethers';
 import {ParamType, Result, isAddress} from 'ethers/lib/utils';
 
-export const convertToNFTSchema = (schema: any) => {
-  let stringSchema = JSON.stringify(schema);
-
-  stringSchema = stringSchema.replace(
-    /"type":"integer"/g,
-    '"type":"integer","bigNumber":true'
-  );
-
-  stringSchema = stringSchema.replace(
-    /'type':'integer'/g,
-    "'type':'integer','bigNumber':true"
-  );
-
-  stringSchema = stringSchema.replace(
-    /"type":"number"/g,
-    '"type":"number","bigNumber":true'
-  );
-
-  stringSchema = stringSchema.replace(
-    /'type':'number'/g,
-    "'type':'number','bigNumber':true'"
-  );
-
-  return JSON.parse(stringSchema);
-};
-
 export const getSchemaByHash = (schemas: Array<any>, hash: string) => {
   for (let item of schemas) {
     if (utils.keccak256(utils.toUtf8Bytes(item.key)) === hash) return item;
@@ -58,49 +32,45 @@ export const encodeKeyByHash = (key: string) => {
 export const encodeDataFromJsonSchema = (jsonSchema: any, data: any) => {
   const components = convertJsonSchemaToParamType(jsonSchema.properties);
 
-  let encodeData = data;
-  if (components[0].type === 'int256') {
-    // number float
-    encodeData = formatFloatData(data);
-  }
+  const propSchema = jsonSchema.properties[components[0].name];
+  const encodeData =
+    propSchema.type === 'number'
+      ? formatFloatData(data, propSchema.decimals)
+      : data;
 
   const DATA_STRUCT = ParamType.fromObject(components[0]);
-
   const abi = ethers.utils.defaultAbiCoder;
-
-  const DATA_VALUE = abi.encode([DATA_STRUCT], [data]);
+  const DATA_VALUE = abi.encode([DATA_STRUCT], [encodeData]);
 
   return DATA_VALUE;
 };
 
 export const decodeDataFromString = (jsonSchema: any, data: string) => {
-  const components = convertJsonSchemaToParamType(jsonSchema.properties);
+  try {
+    const components = convertJsonSchemaToParamType(jsonSchema.properties);
 
-  const DATA_STRUCT = ParamType.fromObject(components[0]);
+    const DATA_STRUCT = ParamType.fromObject(components[0]);
+    const abi = ethers.utils.defaultAbiCoder;
+    const DATA_VALUE = abi.decode([DATA_STRUCT], data);
 
-  const abi = ethers.utils.defaultAbiCoder;
-
-  const DATA_VALUE = abi.decode([DATA_STRUCT], data);
-
-  const isPremitiveFloat = components[0].type === 'int256'; // number float
-
-  return convertDecodedArrayToJson(DATA_VALUE, isPremitiveFloat);
+    const propSchema = jsonSchema.properties[components[0].name];
+    const decimals =
+      propSchema.type === 'number' ? propSchema.decimals ?? 18 : null;
+    return convertDecodedArrayToJson(DATA_VALUE, decimals);
+  } catch (error) {
+    console.error(`Decode data failed - ${error}`);
+    return {};
+  }
 };
 
-function isFloat(n: number) {
-  return Number(n) === n && n % 1 !== 0;
-}
-
-export const formatFloatData = (data: any): any => {
-  const formattedData = JSON.parse(JSON.stringify(data), (key, value) => {
-    if (typeof value === 'number' && isFloat(value)) {
-      return value < 0.000001 // it will convert to 1e-7
-        ? ethers.utils.parseEther(value.toFixed(18))
-        : ethers.utils.parseEther(value.toString());
-    }
-    return value;
-  });
-  return formattedData;
+export const formatFloatData = (value: any, decimals?: number): any => {
+  if (typeof decimals != 'number') decimals = 18;
+  if (typeof value === 'number') {
+    return value < 0.000001 // it will convert to 1e-7
+      ? ethers.utils.parseUnits(value.toFixed(decimals), decimals)
+      : ethers.utils.parseUnits(value.toString(), decimals);
+  }
+  return value;
 };
 
 export const convertJsonSchemaToParamType = (jsonSchema: any): any => {
@@ -170,7 +140,7 @@ export const convertType = (jsonType: string): string => {
 
 export const convertDecodedArrayToJson = (
   decodedArray: Result,
-  isPremitiveFloat?: boolean
+  decimals?: number
 ): any => {
   const keys = Object.keys(decodedArray);
   keys.splice(0, decodedArray.length);
@@ -178,19 +148,19 @@ export const convertDecodedArrayToJson = (
   const result = {} as any;
   keys.forEach(key => {
     const value = decodedArray[key];
-    return (result[key] = convertValue(value, isPremitiveFloat));
+    return (result[key] = convertValue(value, decimals));
   });
 
   return result;
 };
 
-export const convertValue = (value: any, isPremitiveFloat?: boolean): any => {
+export const convertValue = (value: any, decimals?: number): any => {
   if (isAddress(value)) {
     return value.toLowerCase();
   }
 
   if (value instanceof BigNumber) {
-    if (isPremitiveFloat) return parseFloat(ethers.utils.formatEther(value));
+    if (decimals) return parseFloat(ethers.utils.formatUnits(value, decimals));
     else return parseInt(value.toString());
   }
 

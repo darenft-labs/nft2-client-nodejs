@@ -8,7 +8,6 @@ import {
   getDataRegistryMetadata,
 } from './utils/blockchain';
 import {
-  convertToNFTSchema,
   decodeDataFromString,
   getSchemaByHash,
   separateJsonSchema,
@@ -335,8 +334,9 @@ export class NFT2DataRegistry {
           throw new Error(`Schema of dapp ${dapp.id} not found`);
         }
 
-        const jsonSchema = convertToNFTSchema(dappMetadataSchema.jsonSchema);
-        const schemas = separateJsonSchema(jsonSchema) as any[];
+        const schemas = separateJsonSchema(
+          dappMetadataSchema.jsonSchema
+        ) as any[];
 
         const decodeDatas = dapp.metadatas.map(item => {
           const schema = getSchemaByHash(schemas, item.key);
@@ -349,10 +349,9 @@ export class NFT2DataRegistry {
           return decodedValue;
         });
 
-        const metadatas = schemas.map(schema => {
-          const data = decodeDatas.find(item => schema.key in item);
-          return data ?? {[schema.key]: null};
-        });
+        const metadatas = schemas
+          .map(schema => decodeDatas.find(item => schema.key in item))
+          .filter(item => !!item);
 
         return {
           ...providerData,
