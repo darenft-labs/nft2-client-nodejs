@@ -28,6 +28,7 @@ export interface NFT {
   type: number;
   status: number;
   mintedAt: Date;
+  attributes: any[];
   openAt?: Date;
   closeAt?: Date;
   royalties?: number;

@@ -778,6 +778,7 @@ export class NFT2Contract {
           derivedInfo ?? undefined
         ),
         mintedAt: blockTime,
+        attributes: nftMetaData.attributes,
         collection: {
           name: collectionInfo.name,
           symbol: collectionInfo.symbol,

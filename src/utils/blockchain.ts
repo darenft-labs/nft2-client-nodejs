@@ -5,6 +5,8 @@ import CONTRACT_ABI from '../abis/contract-v2.abi.json';
 import REGISTRY_ABI from '../abis/registry-v2.abi.json';
 import {LongevityStatus} from '../consts';
 
+axios.defaults.timeout = 10000;
+
 export const getTokenURI = async (
   provider: ethers.providers.JsonRpcProvider,
   contractAddress: string,
