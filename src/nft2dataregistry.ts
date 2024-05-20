@@ -12,6 +12,7 @@ import {
   getSchemaByHash,
   separateJsonSchema,
 } from './utils/encoding-schema';
+import {DYNAMIC_URI} from './consts';
 
 export class NFT2DataRegistry {
   chainId: number;
@@ -337,6 +338,7 @@ export class NFT2DataRegistry {
         const schemas = separateJsonSchema(
           dappMetadataSchema.jsonSchema
         ) as any[];
+        schemas.push(DYNAMIC_URI);
 
         const decodeDatas = dapp.metadatas.map(item => {
           const schema = getSchemaByHash(schemas, item.key);

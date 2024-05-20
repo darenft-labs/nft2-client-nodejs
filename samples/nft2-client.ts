@@ -12,7 +12,7 @@ async function main() {
     console.log('Client init success: ', nft2Client);
   });
 
-  await testContract(nft2Client);
+  await testDataRegistry(nft2Client);
   // testMerkleTree();
 }
 
@@ -37,10 +37,10 @@ const testContract = async (nft2Client: NFT2Client) => {
 const testDataRegistry = async (nft2Client: NFT2Client) => {
   const dataRegistry = nft2Client.getNFT2DataRegistry(97);
   const datas = await dataRegistry.getNFTMetaData(
-    '0x5c83d5726d3956eec3c43fda76ddd7d09f2c6be9',
-    '1'
+    '0x94a4cb291768dea6e5b604c8c1ff1ff8f3a9a5f4',
+    '0'
   );
-  console.log('datas: ', datas);
+  console.log('datas: ', datas[0]);
 };
 
 const testAPIProtocol = async (nft2Client: NFT2Client) => {
