@@ -18,10 +18,7 @@ async function main() {
 
 const testClient = () => {
   const apiKey = process.env.API_KEY || '';
-  const nft2Client = new NFT2Client(
-    apiKey,
-    'https://protocol-api-stg.nft2scan.com'
-  );
+  const nft2Client = new NFT2Client(apiKey);
   return nft2Client;
 };
 
@@ -35,12 +32,12 @@ const testContract = async (nft2Client: NFT2Client) => {
 };
 
 const testDataRegistry = async (nft2Client: NFT2Client) => {
-  const dataRegistry = nft2Client.getNFT2DataRegistry(97);
-  const datas = await dataRegistry.getNFTMetaData(
-    '0x94a4cb291768dea6e5b604c8c1ff1ff8f3a9a5f4',
-    '0'
+  const dataRegistry = nft2Client.getNFT2DataRegistry(43113);
+  const datas = await dataRegistry.getNFTDynamicMetaData(
+    '0x4022a9c81eb4835f602669de7f8b76f9f3a3650f',
+    'ipfs://QmUaaSUeEyHFch7kYjjAoeGBdYm2RaUs1hBxpgxz5QoCug'
   );
-  console.log('datas: ', datas[0]);
+  console.log('datas: ', datas);
 };
 
 const testAPIProtocol = async (nft2Client: NFT2Client) => {

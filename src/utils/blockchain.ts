@@ -142,10 +142,13 @@ export const getNFTStatus = (
 export const getNFTMetadata = async (
   provider: ethers.providers.JsonRpcProvider,
   contractAddress: string,
-  tokenId: string
+  tokenId: string,
+  dynamicURI?: string
 ) => {
   try {
-    const tokenURI = await getTokenURI(provider, contractAddress, tokenId);
+    const tokenURI = dynamicURI
+      ? dynamicURI
+      : await getTokenURI(provider, contractAddress, tokenId);
     const metaData = tokenURI
       ? (await axios.get(convertIPFSToUri(tokenURI)))?.data
       : {};

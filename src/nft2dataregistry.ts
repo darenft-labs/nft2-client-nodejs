@@ -6,6 +6,7 @@ import {
   checkIsDerivable,
   getBlockTime,
   getDataRegistryMetadata,
+  getNFTMetadata,
 } from './utils/blockchain';
 import {
   decodeDataFromString,
@@ -364,5 +365,14 @@ export class NFT2DataRegistry {
     );
 
     return nftMetaDatas;
+  }
+
+  /**
+   * @param tokenId token id
+   * @param dynamicURI dynamic token uri
+   * @returns Promise<NFT metadatas>
+   */
+  async getNFTDynamicMetaData(tokenId: string, dynamicURI: string) {
+    return await getNFTMetadata(this.provider, '', tokenId, dynamicURI);
   }
 }
