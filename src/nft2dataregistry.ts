@@ -38,19 +38,16 @@ export class NFT2DataRegistry {
     const query = gql`
       {
         dataRegistries(
+          filter: {chainId: {equalTo: ${this.chainId}}}
           first: ${pagination.limit}
           offset: ${pagination.offset}
           orderBy: ${orderBy}
         ) {
           nodes {
             address
-            blockHeight
+            timestamp
             dapp
-            id
             uri
-          }
-          pageInfo {
-            hasNextPage
           }
           totalCount
         }
@@ -60,14 +57,10 @@ export class NFT2DataRegistry {
       dataRegistries: {
         nodes: Array<{
           address: string;
-          blockHeight: string;
+          timestamp: string;
           dapp: string;
-          id: string;
           uri: string;
         }>;
-        pageInfo: {
-          hasNextPage: boolean;
-        };
         totalCount: number;
       };
     } = await this.subqueryService.queryDataOnChain(query, this.chainId);
@@ -88,8 +81,6 @@ export class NFT2DataRegistry {
       onchainData.dataRegistries.nodes.map(async item => {
         const providerData = await getDataRegistryMetadata(item.uri);
 
-        const blockTime = await getBlockTime(this.provider, item.blockHeight);
-
         const isOk = needFilter
           ? await checkIsDerivable(
               this.provider,
@@ -104,7 +95,7 @@ export class NFT2DataRegistry {
             ...providerData,
             walletAddress: item.dapp,
             providerAddress: item.address,
-            registeredAt: blockTime,
+            registeredAt: getBlockTime(item.timestamp),
           } as DataRegistry,
           isOk,
         };
@@ -127,12 +118,15 @@ export class NFT2DataRegistry {
     const query = gql`
     {
       dataRegistries(
-        filter: {dapp: {equalTo: "${address}"}}
+        filter: {
+          chainId: {equalTo: ${this.chainId}}
+          dapp: {equalTo: "${address}"}
+        }
         first: 1
       ) {
         nodes {
           address
-          blockHeight
+          timestamp
           dapp
           uri
         }
@@ -143,7 +137,7 @@ export class NFT2DataRegistry {
       dataRegistries: {
         nodes: Array<{
           address: string;
-          blockHeight: string;
+          timestamp: string;
           dapp: string;
           uri: string;
         }>;
@@ -158,19 +152,13 @@ export class NFT2DataRegistry {
     }
 
     const dataRegistry = onchainData.dataRegistries.nodes[0];
-
     let providerData = await getDataRegistryMetadata(dataRegistry.uri);
-
-    const blockTime = await getBlockTime(
-      this.provider,
-      dataRegistry.blockHeight
-    );
 
     return {
       ...providerData,
       walletAddress: dataRegistry.dapp,
       providerAddress: dataRegistry.address,
-      registeredAt: blockTime,
+      registeredAt: getBlockTime(dataRegistry.timestamp),
     } as DataRegistry;
   }
 
@@ -183,7 +171,7 @@ export class NFT2DataRegistry {
       {
         dataRegistry(id: "${registryAddress.toLowerCase()}") {
           address
-          blockHeight
+          timestamp
           dapp
           uri
         }
@@ -192,7 +180,7 @@ export class NFT2DataRegistry {
     const onchainData: {
       dataRegistry: {
         address: string;
-        blockHeight: string;
+        timestamp: string;
         dapp: string;
         uri: string;
       };
@@ -206,16 +194,11 @@ export class NFT2DataRegistry {
       onchainData.dataRegistry.uri
     );
 
-    const blockTime = await getBlockTime(
-      this.provider,
-      onchainData.dataRegistry.blockHeight
-    );
-
     return {
       ...providerData,
       walletAddress: onchainData.dataRegistry.dapp,
       providerAddress: onchainData.dataRegistry.address,
-      registeredAt: blockTime,
+      registeredAt: getBlockTime(onchainData.dataRegistry.timestamp),
     } as DataRegistry;
   }
 
@@ -228,7 +211,7 @@ export class NFT2DataRegistry {
     const address = collectionAddress.toLowerCase();
     const queryNFT = gql`
       {
-        nFT(id: "${address}-${tokenId}") {
+        nFT(id: "${this.chainId}-${address}-${tokenId}") {
           collection
           tokenId
           underlyingNFT {
@@ -263,15 +246,13 @@ export class NFT2DataRegistry {
         dataRegistryNFTData(
           orderBy: BLOCK_HEIGHT_DESC
           filter: {
-            collection: {
-              equalTo: "${originCollection}"
-            }
-            tokenId: { equalTo: "${originTokenId}" }
-            ${isDerivative ? `dataRegistryId: { equalTo: "${address}" }` : ''}
+            chainId: {equalTo: ${this.chainId}}
+            collection: {equalTo: "${originCollection}"}
+            tokenId: {equalTo: "${originTokenId}"}
+            ${isDerivative ? `dataRegistryId: {equalTo: "${address}"}` : ''}
           }
         ) {
           nodes {
-            id
             collection
             tokenId
             key
@@ -288,7 +269,6 @@ export class NFT2DataRegistry {
     const onchainData: {
       dataRegistryNFTData: {
         nodes: Array<{
-          id: string;
           collection: string;
           tokenId: string;
           key: string;

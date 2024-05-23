@@ -50,14 +50,8 @@ export const getCollectionInfo = async (
   };
 };
 
-export const getBlockTime = async (
-  provider: ethers.providers.JsonRpcProvider,
-  blockNumber: number | string
-) => {
-  if (!blockNumber) return null;
-  const blockInfo = await provider.getBlock(parseInt(blockNumber.toString()));
-  const blockTime = new Date(blockInfo.timestamp * 1000);
-  return blockTime;
+export const getBlockTime = (timestamp: string) => {
+  return new Date(parseInt(timestamp) * 1000);
 };
 
 export const checkIsDerivable = async (

@@ -18,24 +18,25 @@ async function main() {
 
 const testClient = () => {
   const apiKey = process.env.API_KEY || '';
-  const nft2Client = new NFT2Client(apiKey);
+  const apiEndpoint = process.env.API_ENDPOINT || '';
+  const nft2Client = new NFT2Client(apiKey, apiEndpoint);
   return nft2Client;
 };
 
 const testContract = async (nft2Client: NFT2Client) => {
-  const bnbContract = nft2Client.getNFT2Contract(43113);
+  const bnbContract = nft2Client.getNFT2Contract(97);
   const nfts = await bnbContract.getNFTInfo(
-    '0xe878aaabc4c4b1773c5888873d5bf464a0f71d6a',
-    '2'
+    '0xba88c835a648ffe64cc9bbafeb2f80bfbeeb09af',
+    '12'
   );
   console.log('nft: ', nfts);
 };
 
 const testDataRegistry = async (nft2Client: NFT2Client) => {
-  const dataRegistry = nft2Client.getNFT2DataRegistry(43113);
+  const dataRegistry = nft2Client.getNFT2DataRegistry(97);
   const datas = await dataRegistry.getNFTDynamicMetaData(
-    '0x4022a9c81eb4835f602669de7f8b76f9f3a3650f',
-    'ipfs://QmUaaSUeEyHFch7kYjjAoeGBdYm2RaUs1hBxpgxz5QoCug'
+    '123',
+    'ipfs://QmTLRruNTH7rBrvDdzFYmvhwRJnEtkhdBTvoz1neyEVKZm'
   );
   console.log('datas: ', datas);
 };
