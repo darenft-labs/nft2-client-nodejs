@@ -34,9 +34,10 @@ const testContract = async (nft2Client: NFT2Client) => {
 
 const testDataRegistry = async (nft2Client: NFT2Client) => {
   const dataRegistry = nft2Client.getNFT2DataRegistry(97);
-  const datas = await dataRegistry.getNFTDynamicMetaData(
-    '123',
-    'ipfs://QmTLRruNTH7rBrvDdzFYmvhwRJnEtkhdBTvoz1neyEVKZm'
+  const datas = await dataRegistry.getNFTProtocolMetaData(
+    '0x8d6638c8b8e460c8bae91be5ee882ca26e3d6200',
+    '1',
+    '0xc511585754ecb879fd1f17585a1739f581320405'
   );
   console.log('datas: ', datas);
 };

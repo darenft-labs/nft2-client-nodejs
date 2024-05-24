@@ -10,6 +10,7 @@ import {
 } from './utils/blockchain';
 import {
   decodeDataFromString,
+  encodeKeyByHash,
   getSchemaByHash,
   separateJsonSchema,
 } from './utils/encoding-schema';
@@ -208,38 +209,8 @@ export class NFT2DataRegistry {
    * @returns Promise<Array NFT metadatas on dapp>
    */
   async getNFTMetaData(collectionAddress: string, tokenId: string) {
-    const address = collectionAddress.toLowerCase();
-    const queryNFT = gql`
-      {
-        nFT(id: "${this.chainId}-${address}-${tokenId}") {
-          collection
-          tokenId
-          underlyingNFT {
-            collection
-            tokenId
-          }
-        }
-      }
-    `;
-    const nftData: {
-      nFT: {
-        collection: string;
-        tokenId: string;
-        underlyingNFT?: {
-          collection: string;
-          tokenId: string;
-        };
-      };
-    } = await this.subqueryService.queryDataOnChain(queryNFT, this.chainId);
-
-    const isDerivative = nftData.nFT?.underlyingNFT;
-
-    const originCollection = isDerivative
-      ? nftData.nFT.underlyingNFT!.collection
-      : address;
-    const originTokenId = isDerivative
-      ? nftData.nFT.underlyingNFT!.tokenId
-      : tokenId;
+    const {isDerivative, originCollection, originTokenId} =
+      await this.getOriginIfIsDerived(collectionAddress, tokenId);
 
     const query = gql`
       {
@@ -249,7 +220,11 @@ export class NFT2DataRegistry {
             chainId: {equalTo: ${this.chainId}}
             collection: {equalTo: "${originCollection}"}
             tokenId: {equalTo: "${originTokenId}"}
-            ${isDerivative ? `dataRegistryId: {equalTo: "${address}"}` : ''}
+            ${
+              isDerivative
+                ? `dataRegistryId: {equalTo: "${collectionAddress.toLowerCase()}"}`
+                : ''
+            }
           }
         ) {
           nodes {
@@ -319,7 +294,6 @@ export class NFT2DataRegistry {
         const schemas = separateJsonSchema(
           dappMetadataSchema.jsonSchema
         ) as any[];
-        schemas.push(DYNAMIC_URI);
 
         const decodeDatas = dapp.metadatas.map(item => {
           const schema = getSchemaByHash(schemas, item.key);
@@ -348,11 +322,113 @@ export class NFT2DataRegistry {
   }
 
   /**
+   * @param collectionAddress collection address
    * @param tokenId token id
-   * @param dynamicURI dynamic token uri
-   * @returns Promise<NFT metadatas>
+   * @param providerAddress data registry address
+   * @returns Promise<protocol metadatas>
    */
-  async getNFTDynamicMetaData(tokenId: string, dynamicURI: string) {
-    return await getNFTMetadata(this.provider, '', tokenId, dynamicURI);
+  async getNFTProtocolMetaData(
+    collectionAddress: string,
+    tokenId: string,
+    providerAddress: string
+  ) {
+    const {originCollection, originTokenId} = await this.getOriginIfIsDerived(
+      collectionAddress,
+      tokenId
+    );
+
+    // specific keys for NFT2 Protocol
+    const protocolKeys = [encodeKeyByHash(DYNAMIC_URI.key)];
+    const query = gql`
+      {
+        dataRegistryNFTData(
+          orderBy: BLOCK_HEIGHT_DESC
+          filter: {
+            chainId: {equalTo: ${this.chainId}}
+            collection: {equalTo: "${originCollection}"}
+            tokenId: {equalTo: "${originTokenId}"}
+            dataRegistryId: {equalTo: "${providerAddress.toLowerCase()}"}
+            key: {in: ["${protocolKeys.join('","')}"]}
+          }
+        ) {
+          nodes {
+            key
+            value
+          }
+        }
+      }
+    `;
+    const onchainData: {
+      dataRegistryNFTData: {
+        nodes: Array<{
+          key: string;
+          value: string;
+        }>;
+      };
+    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+
+    const metadatas = onchainData.dataRegistryNFTData.nodes.map(item => {
+      let decodedValue: any = null;
+      const schemas = [DYNAMIC_URI];
+
+      const schema = getSchemaByHash(schemas, item.key);
+      if (!schema) {
+        console.error(`Schema for key ${item.key} not found`);
+      } else {
+        decodedValue = decodeDataFromString(schema, item.value);
+      }
+
+      const key = decodedValue ? Object.keys(decodedValue)[0] : null;
+      const value = key ? decodedValue[key] : null;
+      return {key, value};
+    });
+
+    const dynamicUri = metadatas.find(
+      item => item.key === DYNAMIC_URI.key
+    )?.value;
+    const dynamicDatas = dynamicUri
+      ? await getNFTMetadata(this.provider, '', tokenId, dynamicUri)
+      : null;
+
+    return {
+      metadatas,
+      dynamicDatas,
+    };
+  }
+
+  async getOriginIfIsDerived(collectionAddress: string, tokenId: string) {
+    const address = collectionAddress.toLowerCase();
+    const queryNFT = gql`
+      {
+        nFT(id: "${this.chainId}-${address}-${tokenId}") {
+          underlyingNFT {
+            collection
+            tokenId
+          }
+        }
+      }
+    `;
+    const nftData: {
+      nFT: {
+        underlyingNFT?: {
+          collection: string;
+          tokenId: string;
+        };
+      };
+    } = await this.subqueryService.queryDataOnChain(queryNFT, this.chainId);
+
+    const isDerivative = nftData.nFT?.underlyingNFT;
+    const originCollection = isDerivative
+      ? nftData.nFT.underlyingNFT!.collection
+      : address;
+    const originTokenId = isDerivative
+      ? nftData.nFT.underlyingNFT!.tokenId
+      : tokenId;
+
+    return {
+      isDerivative,
+      originCollection,
+      originTokenId,
+    };
   }
 }
