@@ -27,7 +27,7 @@ export class APIService {
    */
   async getChainConfigs(): Promise<ChainConfig[]> {
     const result = await this.authClient.request<ChainConfigResponse[]>({
-      url: `${this.authClient.url}/configs/internal-config`,
+      url: `${this.authClient.url}/configs/internal-config-v2`,
       method: 'GET',
     });
 
