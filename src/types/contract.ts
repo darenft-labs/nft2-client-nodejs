@@ -25,6 +25,7 @@ export interface NFT {
   ownerAddress: string;
   imageUrl: string;
   tokenUri: string;
+  tokenUriGateway: string;
   type: number;
   status: number;
   mintedAt: Date;

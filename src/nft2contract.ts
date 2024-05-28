@@ -240,6 +240,7 @@ export class NFT2Contract {
             isDerived
             owner
             tokenId
+            tokenUri
           }
           totalCount
         }
@@ -260,6 +261,7 @@ export class NFT2Contract {
           isDerived: string;
           owner: string;
           tokenId: string;
+          tokenUri: string;
         }>;
         totalCount: number;
       };
@@ -276,7 +278,8 @@ export class NFT2Contract {
         const nftMetaData = await getNFTMetadata(
           this.provider,
           address,
-          nft.tokenId
+          nft.tokenId,
+          nft.tokenUri
         );
 
         return {
@@ -288,9 +291,11 @@ export class NFT2Contract {
           ownerAddress: nft.owner,
           imageUrl: nftMetaData.image ?? null,
           tokenUri: nftMetaData.tokenUri,
+          tokenUriGateway: nftMetaData.tokenUriGateway,
           type: NFTContractType.Original,
           status: getNFTStatus(nft.isBurned),
           mintedAt: getBlockTime(nft.timestamp),
+          attributes: nftMetaData.attributes,
           royalties: collectionInfo.royaltyInfo.rate,
           collection: {
             name: collectionInfo.name,
@@ -345,9 +350,11 @@ export class NFT2Contract {
             isDerived
             owner
             tokenId
+            tokenUri
             underlyingNFT {
               collection
               tokenId
+              tokenUri
             }
           }
           totalCount
@@ -363,9 +370,11 @@ export class NFT2Contract {
           isDerived: string;
           owner: string;
           tokenId: string;
+          tokenUri: string;
           underlyingNFT: {
             collection: string;
             tokenId: string;
+            tokenUri: string;
           };
         }>;
         totalCount: number;
@@ -439,7 +448,8 @@ export class NFT2Contract {
         const metaData = await getNFTMetadata(
           this.provider,
           isDerivative ? item.underlyingNFT.collection : item.collection,
-          isDerivative ? item.underlyingNFT.tokenId : item.tokenId
+          isDerivative ? item.underlyingNFT.tokenId : item.tokenId,
+          isDerivative ? item.underlyingNFT.tokenUri : item.tokenUri
         );
 
         const derivedInfo = isDerivative
@@ -467,11 +477,13 @@ export class NFT2Contract {
           ownerAddress: item.owner,
           imageUrl: metaData.image ?? null,
           tokenUri: metaData.tokenUri,
+          tokenUriGateway: metaData.tokenUriGateway,
           type: isDerivative
             ? NFTContractType.Derivative
             : NFTContractType.Original,
           status: getNFTStatus(item.isBurned, derivedInfo ?? undefined),
           mintedAt: getBlockTime(item.timestamp),
+          attributes: metaData.attributes,
           collection: collectionInfo,
           royalties: collectionInfo?.defaultRoyalty,
           ...(isDerivative
@@ -604,9 +616,11 @@ export class NFT2Contract {
           ownerAddress: nft.owner,
           imageUrl: nftMetaData.image ?? null,
           tokenUri: nftMetaData.tokenUri,
+          tokenUriGateway: nftMetaData.tokenUriGateway,
           type: NFTContractType.Derivative,
           status: getNFTStatus(nft.isBurned, derivedInfo),
           mintedAt: getBlockTime(nft.timestamp),
+          attributes: nftMetaData.attributes,
           openAt: derivedInfo.startTime,
           closeAt: derivedInfo.endTime,
           royalties: derivedInfo.royaltyInfo.rate,
@@ -640,9 +654,11 @@ export class NFT2Contract {
           isDerived
           owner
           tokenId
+          tokenUri
           underlyingNFT {
             collection
             tokenId
+            tokenUri
           }
         }
       }
@@ -655,9 +671,11 @@ export class NFT2Contract {
         isDerived: string;
         owner: string;
         tokenId: string;
+        tokenUri: string;
         underlyingNFT: {
           collection: string;
           tokenId: string;
+          tokenUri: string;
         };
       };
     } = await this.subqueryService.queryDataOnChain(nftQuery, this.chainId);
@@ -721,7 +739,8 @@ export class NFT2Contract {
     const nftMetaData = await getNFTMetadata(
       this.provider,
       isDerivative ? underlyingNFT.collection : address,
-      isDerivative ? underlyingNFT.tokenId : tokenId
+      isDerivative ? underlyingNFT.tokenId : tokenId,
+      isDerivative ? underlyingNFT.tokenUri : nftOnchainData.nFT.tokenUri
     );
 
     const derivedInfo = isDerivative
@@ -755,6 +774,7 @@ export class NFT2Contract {
         ownerAddress: nftOnchainData.nFT.owner,
         imageUrl: nftMetaData.image ?? null,
         tokenUri: nftMetaData.tokenUri,
+        tokenUriGateway: nftMetaData.tokenUriGateway,
         type: isDerivative
           ? NFTContractType.Derivative
           : NFTContractType.Original,

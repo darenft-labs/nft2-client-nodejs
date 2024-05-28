@@ -6,6 +6,7 @@ export interface DataRegistry {
   providerAddress: string;
   walletAddress: string;
   registryUrl: string | null;
+  registryUrlGateway: string | null;
   registeredAt: Date | null;
   schemas: {
     name: string;

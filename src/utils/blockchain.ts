@@ -151,6 +151,7 @@ export const getNFTMetadata = async (
       ...metaData,
       image: convertIPFSToUri(metaData.image ?? ''),
       tokenUri: convertUrlToIPFS(tokenURI ?? ''),
+      tokenUriGateway: convertIPFSToUri(tokenURI),
       tokenId,
     };
   } catch (error) {
@@ -168,6 +169,7 @@ export const getDataRegistryMetadata = async (dappUri: string) => {
       ...providerData,
       url: convertIPFSToUri(providerData.url ?? ''),
       registryUrl: convertUrlToIPFS(dappUri ?? ''),
+      registryUrlGateway: convertIPFSToUri(dappUri ?? ''),
     };
   } catch (error) {
     return {registryUrl: convertUrlToIPFS(dappUri ?? '')};
