@@ -1,8 +1,9 @@
 import {GraphQLClient} from 'graphql-request';
 import {ChainConfig} from '../types';
+import {getNetworkKey} from '../consts';
 
 export class SubQueryService {
-  clients: {[key: number]: GraphQLClient} = {};
+  clients: {[key: string]: GraphQLClient} = {};
 
   constructor() {}
 
@@ -12,19 +13,19 @@ export class SubQueryService {
    */
   configChains(configs: Array<ChainConfig>) {
     configs.forEach(config => {
-      this.clients[config.chainId] = new GraphQLClient(config.subQueryEndpoint);
+      const key = getNetworkKey(config.chainId);
+      if (!this.clients[key])
+        this.clients[key] = new GraphQLClient(config.subQueryEndpoint);
     });
   }
 
   /**
    * @param query query command by string
-   * @param chainId chain id
+   * @param chainIdOrNetworkType chain id or network type (mainet|testnet)
    * @returns subquery data
    */
-  async queryDataOnChain(query: string, chainId: number) {
-    let client = this.clients[chainId];
-    if (!client) throw new Error(`Chain ${chainId} is not supported!`);
-
+  async queryDataOnChain(query: string, chainIdOrNetworkType: number | string) {
+    let client = this.clients[getNetworkKey(chainIdOrNetworkType)];
     try {
       const result: any = await client.request(query);
       return result;
@@ -33,3 +34,5 @@ export class SubQueryService {
     }
   }
 }
+
+export const subqueryService = new SubQueryService();

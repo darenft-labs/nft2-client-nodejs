@@ -1,5 +1,4 @@
 import {ethers} from 'ethers';
-import {SubQueryService} from './services/subquery.service';
 import {ChainConfig, Collection, DataRegistry, NFT, Pagination} from './types';
 import {gql} from 'graphql-request';
 import {
@@ -11,16 +10,16 @@ import {
   getNFTStatus,
 } from './utils/blockchain';
 import {NFTContractType} from './consts';
+import {subqueryService} from './services/subquery.service';
+import {getCollectionNFTsInfo} from './utils';
 
 export class NFT2Contract {
   chainId: number;
   provider: ethers.providers.JsonRpcProvider;
-  subqueryService: SubQueryService;
 
-  constructor(config: ChainConfig, subquery: SubQueryService) {
+  constructor(config: ChainConfig, provider: ethers.providers.JsonRpcProvider) {
     this.chainId = config.chainId;
-    this.provider = new ethers.providers.JsonRpcProvider(config.providerUrl);
-    this.subqueryService = subquery;
+    this.provider = provider;
   }
 
   /**
@@ -56,7 +55,7 @@ export class NFT2Contract {
         nodes: Array<{address: string}>;
         totalCount: number;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     if (
       !onchainData.collections.nodes ||
@@ -111,7 +110,7 @@ export class NFT2Contract {
         owner: string;
         kind: number;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     const collection = onchainData.collection;
 
@@ -121,7 +120,11 @@ export class NFT2Contract {
     );
 
     const nftInfo = isFullInfo
-      ? await this.getCollectionNFTsInfo(collectionAddress)
+      ? await getCollectionNFTsInfo(
+          this.provider,
+          this.chainId,
+          collectionAddress
+        )
       : ({} as any);
 
     return {
@@ -139,68 +142,6 @@ export class NFT2Contract {
       kind: collection.kind,
       defaultRoyalty: collectionInfo.royaltyInfo.rate,
     } as Collection;
-  }
-
-  /**
-   * @param collectionAddress collection address
-   * @returns Promise<{
-      collectionAddress: string,
-      totalNfts: number,
-      totalOwners: number,
-      firstNft: nftMetaData | null ,
-    }>
-   */
-  async getCollectionNFTsInfo(collectionAddress: string) {
-    const address = collectionAddress.toLowerCase();
-    const query = gql`
-      {
-        nFTs(
-          filter: {
-            chainId: {equalTo: ${this.chainId}}
-            collection: {equalTo: "${address}"}
-          }
-          first: 1
-          orderBy: TOKEN_ID_ASC
-        ) {
-          groupedAggregates(groupBy: OWNER) {
-            keys
-          }
-          totalCount
-          nodes {
-            tokenId
-            tokenUri
-          }
-        }
-      }
-    `;
-    const onchainData: {
-      nFTs: {
-        groupedAggregates: Array<any>;
-        totalCount: number;
-        nodes: Array<{
-          tokenId: string;
-          tokenUri: string;
-        }>;
-      };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
-
-    const firstNft =
-      onchainData.nFTs.nodes.length > 0 ? onchainData.nFTs.nodes[0] : null;
-    const firstNftData = firstNft
-      ? await getNFTMetadata(
-          this.provider,
-          address,
-          firstNft.tokenId,
-          firstNft.tokenUri
-        )
-      : null;
-
-    return {
-      collectionAddress: address,
-      totalNfts: onchainData.nFTs.totalCount,
-      totalOwners: onchainData.nFTs.groupedAggregates.length,
-      firstNft: firstNftData,
-    };
   }
 
   /**
@@ -265,7 +206,7 @@ export class NFT2Contract {
         }>;
         totalCount: number;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     if (!onchainData.nFTs.nodes || onchainData.nFTs.totalCount == 0) {
       return {nfts: [], total: 0};
@@ -379,7 +320,7 @@ export class NFT2Contract {
         }>;
         totalCount: number;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     if (!onchainData.nFTs.nodes || onchainData.nFTs.totalCount == 0) {
       return {nfts: [], total: 0};
@@ -417,10 +358,7 @@ export class NFT2Contract {
           timestamp: string;
         }>;
       };
-    } = await this.subqueryService.queryDataOnChain(
-      collectionQuery,
-      this.chainId
-    );
+    } = await subqueryService.queryDataOnChain(collectionQuery, this.chainId);
 
     const collectionInfos = await Promise.all(
       collectionData.collections.nodes.map(async collection => {
@@ -560,7 +498,7 @@ export class NFT2Contract {
         }>;
         totalCount: number;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     if (!onchainData.nFTs.nodes || onchainData.nFTs.totalCount == 0) {
       return {nfts: [], total: 0};
@@ -585,7 +523,7 @@ export class NFT2Contract {
     `;
     const dappData: {
       dataRegistries: {nodes: Array<{address: string; uri: string}>};
-    } = await this.subqueryService.queryDataOnChain(dappQuery, this.chainId);
+    } = await subqueryService.queryDataOnChain(dappQuery, this.chainId);
 
     const nftMetaData = await getNFTMetadata(
       this.provider,
@@ -678,7 +616,7 @@ export class NFT2Contract {
           tokenUri: string;
         };
       };
-    } = await this.subqueryService.queryDataOnChain(nftQuery, this.chainId);
+    } = await subqueryService.queryDataOnChain(nftQuery, this.chainId);
 
     if (!nftOnchainData.nFT) {
       throw new Error('NFT not found');
@@ -729,7 +667,7 @@ export class NFT2Contract {
         }>;
       };
       dataRegistry: {address: string; uri: string};
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     const collectionInfo = await getCollectionInfo(
       this.provider,

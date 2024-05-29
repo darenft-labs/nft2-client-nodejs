@@ -9,10 +9,10 @@ async function main() {
   const nft2Client = testClient();
 
   await nft2Client.initialize().then(() => {
-    console.log('Client init success: ', nft2Client);
+    console.log('Client init success: ', nft2Client.contractMultichains);
   });
 
-  await testDataRegistry(nft2Client);
+  await testContract(nft2Client);
   // testMerkleTree();
 }
 

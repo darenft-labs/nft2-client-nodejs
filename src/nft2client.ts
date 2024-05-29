@@ -1,64 +1,80 @@
 import {NFT2DataRegistry} from './nft2dataregistry';
 import {NFT2Contract} from './nft2contract';
 import {APIService} from './services/api.service';
-import {SubQueryService} from './services/subquery.service';
+import {subqueryService} from './services/subquery.service';
 import {ChainConfig} from './types';
+import {ethers} from 'ethers';
+import {NFT2ContractMultichain} from './nft2contract-multichain';
+import {pick} from './utils';
+import {MAINNET, TESTNET} from './consts';
 
 export class NFT2Client {
   apiKey: string;
   apiService: APIService;
-  subquery: SubQueryService;
-  configs: ChainConfig[];
+  configs: ChainConfig[] = [];
+  rpcProviders: {[key: number]: ethers.providers.JsonRpcProvider} = {};
   contractClients: {[key: number]: NFT2Contract} = {};
   registryClients: {[key: number]: NFT2DataRegistry} = {};
+  contractMultichains: {
+    [key: string]: NFT2ContractMultichain;
+  } = {};
 
   constructor(apiKey: string, apiEndpoint?: string) {
     this.apiKey = apiKey;
     this.apiService = new APIService(apiKey, apiEndpoint);
-    this.subquery = new SubQueryService();
   }
 
   /**
-   * Get configs from API then inittialze all service
+   * Get configs from API then initialize all service
    */
   async initialize() {
-    this.configs = await this.apiService.getChainConfigs();
-
-    this.subquery.configChains(this.configs);
-
-    this.configs.forEach(config => {
-      this.contractClients[config.chainId] = new NFT2Contract(
-        config,
-        this.subquery
-      );
-
-      this.registryClients[config.chainId] = new NFT2DataRegistry(
-        config,
-        this.subquery
-      );
-    });
+    const configs = await this.apiService.getChainConfigs();
+    this.updateConfig(configs);
   }
 
   /**
    * Update new configs and re-initialize service
    */
   updateConfig(configs: ChainConfig[]) {
-    this.subquery.configChains(this.configs);
-
     configs.forEach(config => {
       const index = this.configs.findIndex(
         item => item.chainId == config.chainId
       );
       index > -1 ? (this.configs[index] = config) : this.configs.push(config);
 
-      this.contractClients[config.chainId] = new NFT2Contract(
-        config,
-        this.subquery
-      );
+      this.initChainConfig(config);
+    });
 
-      this.registryClients[config.chainId] = new NFT2DataRegistry(
-        config,
-        this.subquery
+    subqueryService.configChains(this.configs);
+
+    this.initServiceMultichain();
+  }
+
+  /**
+   * Init service for a config
+   */
+  initChainConfig(config: ChainConfig) {
+    const provider = new ethers.providers.JsonRpcProvider(config.providerUrl);
+    this.contractClients[config.chainId] = new NFT2Contract(config, provider);
+    this.registryClients[config.chainId] = new NFT2DataRegistry(
+      config,
+      provider
+    );
+    this.rpcProviders[config.chainId] = provider;
+  }
+
+  /**
+   * Init service for a config
+   */
+  initServiceMultichain() {
+    [
+      {key: 'mainet', type: MAINNET},
+      {key: 'testnet', type: TESTNET},
+    ].forEach(item => {
+      this.contractMultichains[item.key] = new NFT2ContractMultichain(
+        item.key as any,
+        pick(this.rpcProviders, Object.keys(item.type)),
+        pick(this.contractClients, Object.keys(item.type))
       );
     });
   }
@@ -82,5 +98,14 @@ export class NFT2Client {
    */
   getAPIService(): APIService {
     return this.apiService;
+  }
+
+  /**
+   * @returns getNFT2ContractMultichain instance
+   */
+  getNFT2ContractMultichain(
+    type?: 'mainet' | 'testnet'
+  ): NFT2ContractMultichain {
+    return this.contractMultichains[type ?? 'mainet'];
   }
 }

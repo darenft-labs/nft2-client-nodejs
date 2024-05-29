@@ -1,5 +1,4 @@
 import {ethers} from 'ethers';
-import {SubQueryService} from './services/subquery.service';
 import {ChainConfig, DataRegistry, Pagination} from './types';
 import {gql} from 'graphql-request';
 import {
@@ -15,16 +14,15 @@ import {
   separateJsonSchema,
 } from './utils/encoding-schema';
 import {DYNAMIC_URI} from './consts';
+import {subqueryService} from './services/subquery.service';
 
 export class NFT2DataRegistry {
   chainId: number;
   provider: ethers.providers.JsonRpcProvider;
-  subqueryService: SubQueryService;
 
-  constructor(config: ChainConfig, subquery: SubQueryService) {
+  constructor(config: ChainConfig, provider: ethers.providers.JsonRpcProvider) {
     this.chainId = config.chainId;
-    this.provider = new ethers.providers.JsonRpcProvider(config.providerUrl);
-    this.subqueryService = subquery;
+    this.provider = provider;
   }
 
   /**
@@ -64,7 +62,7 @@ export class NFT2DataRegistry {
         }>;
         totalCount: number;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     if (
       !onchainData.dataRegistries.nodes ||
@@ -143,7 +141,7 @@ export class NFT2DataRegistry {
           uri: string;
         }>;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     if (
       !onchainData.dataRegistries.nodes ||
@@ -185,7 +183,7 @@ export class NFT2DataRegistry {
         dapp: string;
         uri: string;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     if (!onchainData.dataRegistry) {
       throw new Error('Data registry not found');
@@ -255,7 +253,7 @@ export class NFT2DataRegistry {
         }>;
         totalCount: number;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     let dappDatas: Array<{
       id: string;
@@ -365,7 +363,7 @@ export class NFT2DataRegistry {
           value: string;
         }>;
       };
-    } = await this.subqueryService.queryDataOnChain(query, this.chainId);
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     const metadatas = onchainData.dataRegistryNFTData.nodes.map(item => {
       let decodedValue: any = null;
@@ -415,7 +413,7 @@ export class NFT2DataRegistry {
           tokenId: string;
         };
       };
-    } = await this.subqueryService.queryDataOnChain(queryNFT, this.chainId);
+    } = await subqueryService.queryDataOnChain(queryNFT, this.chainId);
 
     const isDerivative = nftData.nFT?.underlyingNFT;
     const originCollection = isDerivative
