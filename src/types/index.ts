@@ -4,3 +4,4 @@ export * from './contract';
 export * from './data-registry';
 export * from './freemint';
 export * from './upload';
+export * from './onchain-subquery';

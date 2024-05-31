@@ -68,13 +68,13 @@ export class NFT2Client {
    */
   initServiceMultichain() {
     [
-      {key: 'mainet', type: MAINNET},
-      {key: 'testnet', type: TESTNET},
+      {key: 'mainnet', network: MAINNET},
+      {key: 'testnet', network: TESTNET},
     ].forEach(item => {
       this.contractMultichains[item.key] = new NFT2ContractMultichain(
-        item.key as any,
-        pick(this.rpcProviders, Object.keys(item.type)),
-        pick(this.contractClients, Object.keys(item.type))
+        item as any,
+        pick(this.rpcProviders, Object.keys(item.network)),
+        pick(this.contractClients, Object.keys(item.network))
       );
     });
   }
@@ -104,8 +104,8 @@ export class NFT2Client {
    * @returns getNFT2ContractMultichain instance
    */
   getNFT2ContractMultichain(
-    type?: 'mainet' | 'testnet'
+    type?: 'mainnet' | 'testnet'
   ): NFT2ContractMultichain {
-    return this.contractMultichains[type ?? 'mainet'];
+    return this.contractMultichains[type ?? 'mainnet'];
   }
 }
