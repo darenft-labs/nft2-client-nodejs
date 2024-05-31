@@ -1,8 +1,7 @@
 import {GraphQLClient, gql} from 'graphql-request';
 import {ChainConfig} from '../types';
-import {getNetworkKey} from '../consts';
 import {ethers} from 'ethers';
-import {getNFTMetadata} from '../utils';
+import {getNFTMetadata, getNetworkKey} from '../utils';
 
 export class SubQueryService {
   clients: {[key: string]: GraphQLClient} = {};
