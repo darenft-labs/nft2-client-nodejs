@@ -145,6 +145,7 @@ export const constructDappResponse = async (dapp: OnchainDapp) => {
 
   return {
     ...providerData,
+    chainId: dapp.chainId,
     walletAddress: dapp.dapp,
     providerAddress: dapp.address,
     registeredAt: getBlockTime(dapp.timestamp),

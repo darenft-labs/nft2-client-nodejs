@@ -45,12 +45,14 @@ export type OnchainNFT = {
 };
 
 export const OnchainDappQuery = `
+  chainId
   address
   timestamp
   dapp
   uri`;
 
 export type OnchainDapp = {
+  chainId: number;
   address: string;
   timestamp: string;
   dapp: string;

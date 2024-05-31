@@ -1,5 +1,11 @@
 import {ethers} from 'ethers';
-import {ChainConfig, DataRegistry, Pagination} from './types';
+import {
+  ChainConfig,
+  DataRegistry,
+  OnchainDapp,
+  OnchainDappQuery,
+  Pagination,
+} from './types';
 import {gql} from 'graphql-request';
 import {
   checkIsDerivable,
@@ -15,6 +21,7 @@ import {
 } from './utils/encoding-schema';
 import {DYNAMIC_URI} from './consts';
 import {subqueryService} from './services/subquery.service';
+import {constructDappResponse} from './utils';
 
 export class NFT2DataRegistry {
   chainId: number;
@@ -43,10 +50,7 @@ export class NFT2DataRegistry {
           orderBy: ${orderBy}
         ) {
           nodes {
-            address
-            timestamp
-            dapp
-            uri
+            ${OnchainDappQuery}
           }
           totalCount
         }
@@ -54,12 +58,7 @@ export class NFT2DataRegistry {
     `;
     const onchainData: {
       dataRegistries: {
-        nodes: Array<{
-          address: string;
-          timestamp: string;
-          dapp: string;
-          uri: string;
-        }>;
+        nodes: Array<OnchainDapp>;
         totalCount: number;
       };
     } = await subqueryService.queryDataOnChain(query, this.chainId);
@@ -78,8 +77,6 @@ export class NFT2DataRegistry {
 
     const dataFromRegistry = await Promise.all(
       onchainData.dataRegistries.nodes.map(async item => {
-        const providerData = await getDataRegistryMetadata(item.uri);
-
         const isOk = needFilter
           ? await checkIsDerivable(
               this.provider,
@@ -90,12 +87,7 @@ export class NFT2DataRegistry {
           : true;
 
         return {
-          data: {
-            ...providerData,
-            walletAddress: item.dapp,
-            providerAddress: item.address,
-            registeredAt: getBlockTime(item.timestamp),
-          } as DataRegistry,
+          data: await constructDappResponse(item),
           isOk,
         };
       })
@@ -124,22 +116,14 @@ export class NFT2DataRegistry {
         first: 1
       ) {
         nodes {
-          address
-          timestamp
-          dapp
-          uri
+          ${OnchainDappQuery}
         }
       }
     }
     `;
     const onchainData: {
       dataRegistries: {
-        nodes: Array<{
-          address: string;
-          timestamp: string;
-          dapp: string;
-          uri: string;
-        }>;
+        nodes: Array<OnchainDapp>;
       };
     } = await subqueryService.queryDataOnChain(query, this.chainId);
 
@@ -150,15 +134,7 @@ export class NFT2DataRegistry {
       throw new Error('Data registry not found');
     }
 
-    const dataRegistry = onchainData.dataRegistries.nodes[0];
-    let providerData = await getDataRegistryMetadata(dataRegistry.uri);
-
-    return {
-      ...providerData,
-      walletAddress: dataRegistry.dapp,
-      providerAddress: dataRegistry.address,
-      registeredAt: getBlockTime(dataRegistry.timestamp),
-    } as DataRegistry;
+    return await constructDappResponse(onchainData.dataRegistries.nodes[0]);
   }
 
   /**
@@ -169,36 +145,19 @@ export class NFT2DataRegistry {
     const query = gql`
       {
         dataRegistry(id: "${registryAddress.toLowerCase()}") {
-          address
-          timestamp
-          dapp
-          uri
+          ${OnchainDappQuery}
         }
       }
     `;
     const onchainData: {
-      dataRegistry: {
-        address: string;
-        timestamp: string;
-        dapp: string;
-        uri: string;
-      };
+      dataRegistry: OnchainDapp;
     } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     if (!onchainData.dataRegistry) {
       throw new Error('Data registry not found');
     }
 
-    let providerData = await getDataRegistryMetadata(
-      onchainData.dataRegistry.uri
-    );
-
-    return {
-      ...providerData,
-      walletAddress: onchainData.dataRegistry.dapp,
-      providerAddress: onchainData.dataRegistry.address,
-      registeredAt: getBlockTime(onchainData.dataRegistry.timestamp),
-    } as DataRegistry;
+    return await constructDappResponse(onchainData.dataRegistry);
   }
 
   /**
@@ -231,8 +190,7 @@ export class NFT2DataRegistry {
             key
             value
             dataRegistry {
-              id
-              uri
+              ${OnchainDappQuery}
             }
           }
           totalCount
@@ -246,37 +204,33 @@ export class NFT2DataRegistry {
           tokenId: string;
           key: string;
           value: string;
-          dataRegistry: {
-            id: string;
-            uri: string;
-          };
+          dataRegistry: OnchainDapp;
         }>;
         totalCount: number;
       };
     } = await subqueryService.queryDataOnChain(query, this.chainId);
 
     let dappDatas: Array<{
-      id: string;
-      uri: string;
+      dapp: OnchainDapp;
       metadatas: Array<{key: string; value: string}>;
     }> = [];
     onchainData.dataRegistryNFTData.nodes.forEach(dapp => {
-      let available = dappDatas.find(item => item.id === dapp.dataRegistry.id);
+      let available = dappDatas.find(
+        item => item.dapp.address === dapp.dataRegistry.address
+      );
       if (available) {
         available.metadatas.push({key: dapp.key, value: dapp.value});
       } else {
         dappDatas.push({
-          ...dapp.dataRegistry,
+          dapp: dapp.dataRegistry,
           metadatas: [{key: dapp.key, value: dapp.value}],
         });
       }
     });
 
     const nftMetaDatas = await Promise.all(
-      dappDatas.map(async dapp => {
-        const providerData: DataRegistry = await getDataRegistryMetadata(
-          dapp.uri
-        );
+      dappDatas.map(async dappData => {
+        const providerData = await constructDappResponse(dappData.dapp);
 
         const defaultSchema = providerData.schemas as any;
         const collectionSchemas = (providerData as any).collectionSchemas || [];
@@ -286,14 +240,16 @@ export class NFT2DataRegistry {
         if (!dappMetadataSchema) dappMetadataSchema = defaultSchema;
 
         if (!dappMetadataSchema || !dappMetadataSchema.jsonSchema) {
-          throw new Error(`Schema of dapp ${dapp.id} not found`);
+          throw new Error(
+            `Schema of dapp ${providerData.providerAddress} not found`
+          );
         }
 
         const schemas = separateJsonSchema(
           dappMetadataSchema.jsonSchema
         ) as any[];
 
-        const decodeDatas = dapp.metadatas.map(item => {
+        const decodeDatas = dappData.metadatas.map(item => {
           const schema = getSchemaByHash(schemas, item.key);
           if (!schema) {
             console.error(`Schema for key ${item.key} not found`);
@@ -310,7 +266,6 @@ export class NFT2DataRegistry {
 
         return {
           ...providerData,
-          providerAddress: dapp.id,
           metadatas,
         };
       })

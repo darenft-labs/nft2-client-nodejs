@@ -4,9 +4,10 @@ import {APIService} from './services/api.service';
 import {subqueryService} from './services/subquery.service';
 import {ChainConfig} from './types';
 import {ethers} from 'ethers';
-import {NFT2ContractMultichain} from './nft2contract-multichain';
 import {pick} from './utils';
 import {MAINNET, TESTNET} from './consts';
+import {NFT2ContractMultichain} from './nft2contract-multichain';
+import {NFT2DataRegistryMultichain} from './nft2dataregistry-multichain';
 
 export class NFT2Client {
   apiKey: string;
@@ -17,6 +18,9 @@ export class NFT2Client {
   registryClients: {[key: number]: NFT2DataRegistry} = {};
   contractMultichains: {
     [key: string]: NFT2ContractMultichain;
+  } = {};
+  dataRegistryMultichains: {
+    [key: string]: NFT2DataRegistryMultichain;
   } = {};
 
   constructor(apiKey: string, apiEndpoint?: string) {
@@ -76,6 +80,12 @@ export class NFT2Client {
         pick(this.rpcProviders, Object.keys(item.network)),
         pick(this.contractClients, Object.keys(item.network))
       );
+
+      this.dataRegistryMultichains[item.key] = new NFT2DataRegistryMultichain(
+        item as any,
+        pick(this.rpcProviders, Object.keys(item.network)),
+        pick(this.registryClients, Object.keys(item.network))
+      );
     });
   }
 
@@ -101,11 +111,20 @@ export class NFT2Client {
   }
 
   /**
-   * @returns getNFT2ContractMultichain instance
+   * @returns NFT2ContractMultichain instance
    */
   getNFT2ContractMultichain(
     type?: 'mainnet' | 'testnet'
   ): NFT2ContractMultichain {
     return this.contractMultichains[type ?? 'mainnet'];
+  }
+
+  /**
+   * @returns NFT2DataRegistryMultichain instance
+   */
+  getNFT2DataRegistryMultichain(
+    type?: 'mainnet' | 'testnet'
+  ): NFT2DataRegistryMultichain {
+    return this.dataRegistryMultichains[type ?? 'mainnet'];
   }
 }
