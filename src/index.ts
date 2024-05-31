@@ -12,3 +12,4 @@ export {NFT2DataRegistry} from './nft2dataregistry';
 
 export * from './types';
 export * as utils from './utils';
+export {subqueryService} from './services/subquery.service';
