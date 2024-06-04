@@ -12,7 +12,7 @@ async function main() {
     console.log('Client init success: ', nft2Client.dataRegistryMultichains);
   });
 
-  await testDataRegistry(nft2Client);
+  await testContract(nft2Client);
   // testMerkleTree();
 }
 
@@ -24,11 +24,10 @@ const testClient = () => {
 };
 
 const testContract = async (nft2Client: NFT2Client) => {
-  const bnbContract = nft2Client.getNFT2ContractMultichain('testnet');
-  const nfts = await bnbContract.getNFTInfo(
-    43113,
-    '0x280e2561c03c4567796965a4fd06eb55878037f9',
-    '4'
+  const bnbContract = nft2Client.getNFT2Contract(43114);
+  const nfts = await bnbContract.getNFTsByOwnerLite(
+    '0x581530bb07091fe1f285211c24ba43da0f005fc9',
+    {limit: 10, offset: 0}
   );
   console.log('nft: ', nfts);
 };

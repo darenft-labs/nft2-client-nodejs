@@ -8,9 +8,10 @@ import {
   OnchainNFT,
   OnchainDappQuery,
   OnchainDapp,
+  NFT,
 } from './types';
 import {gql} from 'graphql-request';
-import {getNFTMetadata} from './utils/blockchain';
+import {getBlockTime, getNFTMetadata, getNFTStatus} from './utils/blockchain';
 import {subqueryService} from './services/subquery.service';
 import {
   constructCollectionResponse,
@@ -18,6 +19,7 @@ import {
   constructDerivativeNFTResponse,
   constructNFTResponse,
 } from './utils';
+import {NFTContractType} from './consts';
 
 export class NFT2Contract {
   chainId: number;
@@ -457,5 +459,72 @@ export class NFT2Contract {
           ? onchainData.derivedAccounts.nodes[0].address
           : null,
     };
+  }
+
+  /**
+   * @param ownerAddress owner wallet address
+   * @param pagination Pagination {offset, limit, sort, filter}
+   * @param pagination.sort object {field: 'mintedAt' | 'tokenId', order: 'ASC' | 'DESC'}
+   * @param pagination.filter object {isDerivative: false | true} // default false
+   * @returns Promise<{ nfts: NFT[]; total: number; }>
+   */
+  async getNFTsByOwnerLite(ownerAddress: string, pagination: Pagination) {
+    let orderBy = 'TIMESTAMP_DESC';
+    if (pagination.sort) {
+      orderBy = `${
+        pagination.sort.field === 'tokenId' ? 'TOKEN_ID' : 'TIMESTAMP'
+      }_${pagination.sort.order}`;
+    }
+    const isDerivative = pagination.filter?.isDerivative ? true : false;
+
+    const query = gql`
+      {
+        nFTs(
+          filter: {
+            chainId: {equalTo: ${this.chainId}}
+            owner: {equalToInsensitive: "${ownerAddress}"}
+            isDerived: ${isDerivative ? '{equalTo: true}' : '{isNull: true}'}
+          }
+          first: ${pagination.limit}
+          offset: ${pagination.offset}
+          orderBy: ${orderBy}
+        ) {
+          nodes {
+            ${OnchainNFTQuery}
+          }
+          totalCount
+        }
+      }
+    `;
+    const onchainData: {
+      nFTs: {
+        nodes: Array<OnchainNFT>;
+        totalCount: number;
+      };
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
+
+    if (!onchainData.nFTs.nodes || onchainData.nFTs.totalCount == 0) {
+      return {nfts: [], total: 0};
+    }
+
+    const nfts = onchainData.nFTs.nodes.map(
+      nft =>
+        ({
+          chainId: nft.chainId,
+          collection: {
+            contractAddress: nft.collection,
+          },
+          ownerAddress: nft.owner,
+          tokenId: nft.tokenId,
+          tokenUri: nft.tokenUri,
+          type: nft.underlyingNFT
+            ? NFTContractType.Derivative
+            : NFTContractType.Original,
+          status: getNFTStatus(nft.isBurned),
+          mintedAt: getBlockTime(nft.timestamp),
+        } as NFT)
+    );
+
+    return {nfts, total: onchainData.nFTs.totalCount};
   }
 }
