@@ -8,18 +8,17 @@ import {
   OnchainNFT,
   OnchainDappQuery,
   OnchainDapp,
-  NFT,
 } from './types';
 import {gql} from 'graphql-request';
-import {getBlockTime, getNFTMetadata, getNFTStatus} from './utils/blockchain';
+import {getNFTMetadata} from './utils/blockchain';
 import {subqueryService} from './services/subquery.service';
 import {
   constructCollectionResponse,
   constructDappResponse,
   constructDerivativeNFTResponse,
+  constructNFTLiteResponse,
   constructNFTResponse,
 } from './utils';
-import {NFTContractType} from './consts';
 
 export class NFT2Contract {
   chainId: number;
@@ -507,24 +506,9 @@ export class NFT2Contract {
       return {nfts: [], total: 0};
     }
 
-    const nfts = onchainData.nFTs.nodes.map(
-      nft =>
-        ({
-          chainId: nft.chainId,
-          collection: {
-            contractAddress: nft.collection,
-          },
-          ownerAddress: nft.owner,
-          tokenId: nft.tokenId,
-          tokenUri: nft.tokenUri,
-          type: nft.underlyingNFT
-            ? NFTContractType.Derivative
-            : NFTContractType.Original,
-          status: getNFTStatus(nft.isBurned),
-          mintedAt: getBlockTime(nft.timestamp),
-        } as NFT)
-    );
-
-    return {nfts, total: onchainData.nFTs.totalCount};
+    return {
+      nfts: onchainData.nFTs.nodes.map(constructNFTLiteResponse),
+      total: onchainData.nFTs.totalCount,
+    };
   }
 }

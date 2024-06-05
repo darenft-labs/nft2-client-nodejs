@@ -9,7 +9,11 @@ import {
   Pagination,
 } from './types';
 import {gql} from 'graphql-request';
-import {constructCollectionResponse, constructNFTResponse} from './utils';
+import {
+  constructCollectionResponse,
+  constructNFTLiteResponse,
+  constructNFTResponse,
+} from './utils';
 
 export class NFT2ContractMultichain {
   networkType: 'mainnet' | 'testnet';
@@ -304,5 +308,62 @@ export class NFT2ContractMultichain {
       collectionAddress,
       tokenId
     );
+  }
+
+  /**
+   * @param ownerAddress owner wallet address
+   * @param pagination Pagination {offset, limit, sort, filter}
+   * @param pagination.sort object {field: 'mintedAt' | 'tokenId', order: 'ASC' | 'DESC'}
+   * @param pagination.filter object {isDerivative: false | true} // default false
+   * @returns Promise<{ nfts: NFT[]; total: number; }>
+   */
+  async getNFTsByOwnerLite(
+    ownerAddress: string,
+    pagination: Pagination,
+    chainIds?: number[]
+  ) {
+    let orderBy = 'TIMESTAMP_DESC';
+    if (pagination.sort) {
+      orderBy = `${
+        pagination.sort.field === 'tokenId' ? 'TOKEN_ID' : 'TIMESTAMP'
+      }_${pagination.sort.order}`;
+    }
+    const isDerivative = pagination.filter?.isDerivative ? true : false;
+
+    const chainList = chainIds ? chainIds : Object.keys(this.networkChains);
+    const query = gql`
+        {
+          nFTs(
+            filter: {
+              chainId: {in: [${chainList.join(',')}]}
+              owner: {equalToInsensitive: "${ownerAddress}"}
+              isDerived: ${isDerivative ? '{equalTo: true}' : '{isNull: true}'}
+            }
+            first: ${pagination.limit}
+            offset: ${pagination.offset}
+            orderBy: ${orderBy}
+          ) {
+            nodes {
+              ${OnchainNFTQuery}
+            }
+            totalCount
+          }
+        }
+      `;
+    const onchainData: {
+      nFTs: {
+        nodes: Array<OnchainNFT>;
+        totalCount: number;
+      };
+    } = await subqueryService.queryDataOnChain(query, this.networkType);
+
+    if (!onchainData.nFTs.nodes || onchainData.nFTs.totalCount == 0) {
+      return {nfts: [], total: 0};
+    }
+
+    return {
+      nfts: onchainData.nFTs.nodes.map(constructNFTLiteResponse),
+      total: onchainData.nFTs.totalCount,
+    };
   }
 }

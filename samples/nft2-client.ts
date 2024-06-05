@@ -24,7 +24,7 @@ const testClient = () => {
 };
 
 const testContract = async (nft2Client: NFT2Client) => {
-  const bnbContract = nft2Client.getNFT2Contract(43114);
+  const bnbContract = nft2Client.getNFT2ContractMultichain('mainnet');
   const nfts = await bnbContract.getNFTsByOwnerLite(
     '0x581530bb07091fe1f285211c24ba43da0f005fc9',
     {limit: 10, offset: 0}
