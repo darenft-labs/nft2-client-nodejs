@@ -304,9 +304,7 @@ export class NFT2Contract {
         nFTs(
           filter: {
             chainId: {equalTo: ${this.chainId}}
-            underlyingNFTId: {
-              equalTo: "${nftKey}"
-            }
+            underlyingNFTId: {equalTo: "${nftKey}"}
           }
           first: ${pagination.limit}
           offset: ${pagination.offset}
@@ -399,6 +397,9 @@ export class NFT2Contract {
     }
 
     const underlyingNFT = nftOnchainData.nFT.underlyingNFT;
+    const underlyingNFTKey = `${this.chainId}-${
+      underlyingNFT ? underlyingNFT.collection : address
+    }-${underlyingNFT ? underlyingNFT.tokenId : tokenId}`;
     const query = gql`
       {
         collection(id: "${
@@ -406,22 +407,17 @@ export class NFT2Contract {
         }") {
           ${OnchainCollectionQuery}
         }
-        derivedAccounts(
-          first: 1
-          offset: 0
-          filter: {
-            underlyingCollection: {equalTo: "${
-              underlyingNFT ? underlyingNFT.collection : address
-            }"}
-            underlyingTokenId: {equalTo: "${
-              underlyingNFT ? underlyingNFT.tokenId : tokenId
-            }"}
-          }
-        ) {
-          nodes {
-            address
-          }
-        }
+        # derivedAccounts(
+        #   first: 1
+        #   offset: 0
+        #   filter: {
+        #     underlyingNFTId: {equalTo: "${underlyingNFTKey}"}
+        #   }
+        # ) {
+        #   nodes {
+        #     address
+        #   }
+        # }
         dataRegistry(id: "${address}") {
           ${OnchainDappQuery}
         }
@@ -429,11 +425,11 @@ export class NFT2Contract {
     `;
     const onchainData: {
       collection: OnchainCollection;
-      derivedAccounts: {
-        nodes: Array<{
-          address: string;
-        }>;
-      };
+      // derivedAccounts: {
+      //   nodes: Array<{
+      //     address: string;
+      //   }>;
+      // };
       dataRegistry: OnchainDapp;
     } = await subqueryService.queryDataOnChain(query, this.chainId);
 
@@ -453,10 +449,10 @@ export class NFT2Contract {
         collectionInfo,
         dataRegistry
       ),
-      derivedAccount:
-        onchainData.derivedAccounts.nodes?.length > 0
-          ? onchainData.derivedAccounts.nodes[0].address
-          : null,
+      derivedAccount: null,
+      // onchainData.derivedAccounts.nodes?.length > 0
+      //   ? onchainData.derivedAccounts.nodes[0].address
+      //   : null,
     };
   }
 
