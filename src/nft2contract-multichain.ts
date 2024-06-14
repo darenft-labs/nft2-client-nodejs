@@ -311,6 +311,23 @@ export class NFT2ContractMultichain {
   }
 
   /**
+   * @param chainId chain id
+   * @param collectionAddress collection address
+   * @param tokenId token id
+   * @returns Promise<[ERC6551 TBA accounts]>
+   */
+  async getTbaAccounts(
+    chainId: number,
+    collectionAddress: string,
+    tokenId: string
+  ) {
+    return await this.getClientForChain(chainId).getTbaAccounts(
+      collectionAddress,
+      tokenId
+    );
+  }
+
+  /**
    * @param ownerAddress owner wallet address
    * @param pagination Pagination {offset, limit, sort, filter}
    * @param pagination.sort object {field: 'mintedAt' | 'tokenId', order: 'ASC' | 'DESC'}

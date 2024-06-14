@@ -10,7 +10,7 @@ import {
   OnchainDapp,
 } from './types';
 import {gql} from 'graphql-request';
-import {getNFTMetadata} from './utils/blockchain';
+import {getBlockTime, getNFTMetadata} from './utils/blockchain';
 import {subqueryService} from './services/subquery.service';
 import {
   constructCollectionResponse,
@@ -35,9 +35,9 @@ export class NFT2Contract {
    * @returns Promise<{ collections: Collection[]; total: number; }>
    */
   async getCollections(pagination: Pagination, filter?: string) {
-    let orderBy = 'BLOCK_HEIGHT_DESC';
+    let orderBy = 'TIMESTAMP_DESC';
     if (pagination.sort?.order == 'ASC') {
-      orderBy = 'BLOCK_HEIGHT_ASC';
+      orderBy = 'TIMESTAMP_ASC';
     }
     const query = gql`
       {
@@ -135,7 +135,7 @@ export class NFT2Contract {
     let orderBy = 'TOKEN_ID_ASC';
     if (pagination.sort) {
       orderBy = `${
-        pagination.sort.field === 'tokenId' ? 'TOKEN_ID' : 'BLOCK_HEIGHT'
+        pagination.sort.field === 'tokenId' ? 'TOKEN_ID' : 'TIMESTAMP'
       }_${pagination.sort.order}`;
     }
     const query = gql`
@@ -194,10 +194,10 @@ export class NFT2Contract {
    * @returns Promise<{ nfts: NFT[]; total: number; }>
    */
   async getNFTsByOwner(ownerAddress: string, pagination: Pagination) {
-    let orderBy = 'TOKEN_ID_ASC';
+    let orderBy = 'TIMESTAMP_DESC';
     if (pagination.sort) {
       orderBy = `${
-        pagination.sort.field === 'tokenId' ? 'TOKEN_ID' : 'BLOCK_HEIGHT'
+        pagination.sort.field === 'tokenId' ? 'TOKEN_ID' : 'TIMESTAMP'
       }_${pagination.sort.order}`;
     }
     const isDerivative = pagination.filter?.isDerivative ? true : false;
@@ -295,9 +295,9 @@ export class NFT2Contract {
   ) {
     const address = originCollectionAddress.toLowerCase();
     const nftKey = `${this.chainId}-${address}-${originTokenId}`;
-    let orderBy = 'BLOCK_HEIGHT_DESC';
+    let orderBy = 'TIMESTAMP_DESC';
     if (pagination.sort?.order == 'ASC') {
-      orderBy = 'BLOCK_HEIGHT_ASC';
+      orderBy = 'TIMESTAMP_ASC';
     }
     const query = gql`
       {
@@ -454,6 +454,58 @@ export class NFT2Contract {
       //   ? onchainData.derivedAccounts.nodes[0].address
       //   : null,
     };
+  }
+
+  /**
+   * @param collectionAddress collection address
+   * @param tokenId token id
+   * @returns Promise<[ERC6551 TBA accounts]>
+   */
+  async getTbaAccounts(collectionAddress: string, tokenId: string) {
+    const nftKey = `${
+      this.chainId
+    }-${collectionAddress.toLowerCase()}-${tokenId}`;
+    const query = gql`
+      {
+        nFT(id: "${nftKey}") {
+          tbaAccounts {
+            nodes {
+              chainId
+              timestamp
+              account
+              implementation
+            }
+          }
+        }
+      }
+    `;
+    const onchainData: {
+      nFT: {
+        tbaAccounts: {
+          nodes: Array<{
+            chainId: number;
+            timestamp: string;
+            account: string;
+            implementation: string;
+          }>;
+        };
+      };
+    } = await subqueryService.queryDataOnChain(query, this.chainId);
+
+    if (
+      !onchainData.nFT ||
+      !onchainData.nFT.tbaAccounts ||
+      !onchainData.nFT.tbaAccounts.nodes
+    ) {
+      return [];
+    }
+
+    return onchainData.nFT.tbaAccounts.nodes.map(item => ({
+      chainId: item.chainId,
+      account: item.account,
+      implementation: item.implementation,
+      createdAt: getBlockTime(item.timestamp),
+    }));
   }
 
   /**

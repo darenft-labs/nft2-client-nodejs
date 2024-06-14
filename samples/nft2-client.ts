@@ -24,11 +24,11 @@ const testClient = () => {
 };
 
 const testContract = async (nft2Client: NFT2Client) => {
-  const bnbContract = nft2Client.getNFT2ContractMultichain('mainnet');
-  const nfts = await bnbContract.getNFTInfo(
-    56,
-    '0x85005ad5b1b0179b8d43d1a7c3960a5bb7580ff5',
-    '0'
+  const bnbContract = nft2Client.getNFT2ContractMultichain('testnet');
+  const nfts = await bnbContract.getTbaAccounts(
+    43113,
+    '0xd056c8fedfaf1f89e918ed9316f3e74b5f32af8e',
+    '3'
   );
   console.log('nft: ', nfts);
 };
@@ -47,18 +47,10 @@ const testDataRegistry = async (nft2Client: NFT2Client) => {
 const testAPIProtocol = async (nft2Client: NFT2Client) => {
   const apiProtocol = nft2Client.getAPIService();
 
-  const datas = await apiProtocol.generatePresignedImage({
-    files: [
-      {
-        fileName: 'file1.xyz',
-        mimeType: 'image/png',
-      },
-      {
-        fileName: 'file2.abc',
-        mimeType: 'image/jpeg',
-      },
-    ],
-  });
+  const datas = await apiProtocol.getTokenBalancesOfWallet(
+    97,
+    '0xCa4597167270D2AD6931C35DEA4c59837E1A9E74'
+  );
   console.log('datas: ', datas);
 };
 

@@ -5,3 +5,4 @@ export * from './data-registry';
 export * from './freemint';
 export * from './upload';
 export * from './onchain-subquery';
+export * from './api';

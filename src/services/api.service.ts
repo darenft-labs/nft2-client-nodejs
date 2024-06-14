@@ -7,6 +7,7 @@ import {
   JsonUriMetadata,
   PresignImageData,
   PresignedImageResponse,
+  TokenBalancesResponse,
   UploadJsonUriRespone,
 } from '../types';
 
@@ -123,5 +124,27 @@ export class APIService {
     });
 
     return result?.data ? result.data : {urls: []};
+  }
+
+  /**
+   * @param chainId id of chain
+   * @param walletAddress wallet address
+   * @param currency Supports USD, CAD, EUR, SGD, INR, JPY, VND, CNY, KRW, RUB, TRY, NGN, ARS, AUD, CHF, and GBP. Default USD
+   * @returns token balances of a wallet
+   */
+  async getTokenBalancesOfWallet(
+    chainId: number,
+    walletAddress: string,
+    currency?: string
+  ): Promise<TokenBalancesResponse> {
+    const result = await this.authClient.request<TokenBalancesResponse>({
+      url: `${this.authClient.url}/nfts/royalties/${chainId}/${walletAddress}`,
+      method: 'GET',
+      params: {
+        currency: currency,
+      },
+    });
+
+    return result?.data ? result.data : {royalties: []};
   }
 }
