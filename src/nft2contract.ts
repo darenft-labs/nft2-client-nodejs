@@ -14,8 +14,6 @@ import {getBlockTime, getNFTMetadata} from './utils/blockchain';
 import {subqueryService} from './services/subquery.service';
 import {
   constructCollectionResponse,
-  constructDappResponse,
-  constructDerivativeNFTResponse,
   constructNFTLiteResponse,
   constructNFTResponse,
 } from './utils';
@@ -360,11 +358,12 @@ export class NFT2Contract {
           item => item.address === nft.collection
         );
 
-        return await constructDerivativeNFTResponse(
+        return await constructNFTResponse(
           this.provider,
           nft,
-          originNftMetaData,
-          dapp
+          undefined,
+          dapp,
+          originNftMetaData
         );
       })
     );
@@ -438,16 +437,12 @@ export class NFT2Contract {
       onchainData.collection
     );
 
-    let dataRegistry = underlyingNFT
-      ? await constructDappResponse(onchainData.dataRegistry)
-      : undefined;
-
     return {
       nft: await constructNFTResponse(
         this.provider,
         nftOnchainData.nFT,
         collectionInfo,
-        dataRegistry
+        underlyingNFT ? onchainData.dataRegistry : undefined
       ),
       derivedAccount: null,
       // onchainData.derivedAccounts.nodes?.length > 0

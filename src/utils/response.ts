@@ -45,14 +45,21 @@ export const constructNFTResponse = async (
   provider: ethers.providers.JsonRpcProvider,
   nft: OnchainNFT,
   collection?: Collection,
-  dataRegistry?: DataRegistry
+  dapp?: OnchainDapp,
+  originNftMetaData?: any
 ) => {
-  const nftMetaData = await getNFTMetadata(
-    provider,
-    nft.underlyingNFT ? nft.underlyingNFT.collection : nft.collection,
-    nft.underlyingNFT ? nft.underlyingNFT.tokenId : nft.tokenId,
-    nft.underlyingNFT ? nft.underlyingNFT.tokenUri : nft.tokenUri
-  );
+  const nftMetaData = originNftMetaData
+    ? originNftMetaData
+    : await getNFTMetadata(
+        provider,
+        nft.underlyingNFT ? nft.underlyingNFT.collection : nft.collection,
+        nft.underlyingNFT ? nft.underlyingNFT.tokenId : nft.tokenId,
+        nft.underlyingNFT ? nft.underlyingNFT.tokenUri : nft.tokenUri
+      );
+
+  const dataRegistry = dapp
+    ? await constructDappResponse(dapp)
+    : {providerAddress: nft.collection};
 
   const derivedInfo = nft.underlyingNFT
     ? await getDerivedInfo(
@@ -64,8 +71,8 @@ export const constructNFTResponse = async (
     : null;
 
   return {
-    name: nftMetaData?.name,
-    description: nftMetaData?.description,
+    name: nftMetaData.name,
+    description: nftMetaData.description,
     tokenId: nft.tokenId,
     chainId: nft.chainId,
     creatorAddress: collection?.ownerAddress,
@@ -90,53 +97,9 @@ export const constructNFTResponse = async (
             collectionAddress: nft.underlyingNFT.collection,
             tokenId: nft.underlyingNFT.tokenId,
           },
-          dataRegistry: dataRegistry
-            ? dataRegistry
-            : {providerAddress: nft.collection},
+          dataRegistry: dataRegistry,
         }
       : {}),
-  } as NFT;
-};
-
-export const constructDerivativeNFTResponse = async (
-  provider: ethers.providers.JsonRpcProvider,
-  nft: OnchainNFT,
-  originNftMetaData: any,
-  dapp?: OnchainDapp
-) => {
-  const dappMetadata = dapp
-    ? await constructDappResponse(dapp)
-    : {providerAddress: nft.collection};
-
-  const derivedInfo = await getDerivedInfo(
-    provider,
-    nft.collection,
-    nft.underlyingNFT!.collection,
-    nft.underlyingNFT!.tokenId
-  );
-
-  return {
-    name: originNftMetaData.name,
-    description: originNftMetaData.description,
-    tokenId: nft.tokenId,
-    chainId: nft.chainId,
-    // creatorAddress: nft.owner,
-    ownerAddress: nft.owner,
-    imageUrl: originNftMetaData.image ?? null,
-    tokenUri: originNftMetaData.tokenUri,
-    tokenUriGateway: originNftMetaData.tokenUriGateway,
-    type: NFTContractType.Derivative,
-    status: getNFTStatus(nft.isBurned, derivedInfo),
-    mintedAt: getBlockTime(nft.timestamp),
-    attributes: originNftMetaData.attributes,
-    openAt: derivedInfo.startTime,
-    closeAt: derivedInfo.endTime,
-    royalties: derivedInfo.royaltyInfo.rate,
-    original: {
-      collectionAddress: nft.underlyingNFT!.collection,
-      tokenId: nft.underlyingNFT!.tokenId,
-    },
-    dataRegistry: dappMetadata,
   } as NFT;
 };
 
