@@ -115,11 +115,29 @@ export const constructDappResponse = async (dapp: OnchainDapp) => {
   } as DataRegistry;
 };
 
-export const constructNFTLiteResponse = (nft: OnchainNFT) => {
+export const constructCollectionLiteResponse = (
+  collection: OnchainCollection
+) => {
+  return {
+    contractAddress: collection.address,
+    ownerAddress: collection.owner,
+    creatorAddress: collection.owner,
+    chainId: collection.chainId,
+    type: NFTContractType.Original, // always original
+    deployedAt: getBlockTime(collection.timestamp),
+    kind: collection.kind,
+  } as Collection;
+};
+
+export const constructNFTLiteResponse = (
+  nft: OnchainNFT,
+  collection?: Collection
+) => {
   return {
     chainId: nft.chainId,
     collection: {
       contractAddress: nft.collection,
+      ...(collection ? collection : {}),
     },
     ownerAddress: nft.owner,
     tokenId: nft.tokenId,

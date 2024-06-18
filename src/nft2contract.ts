@@ -13,6 +13,7 @@ import {gql} from 'graphql-request';
 import {getBlockTime, getNFTMetadata} from './utils/blockchain';
 import {subqueryService} from './services/subquery.service';
 import {
+  constructCollectionLiteResponse,
   constructCollectionResponse,
   constructNFTLiteResponse,
   constructNFTResponse,
@@ -128,7 +129,11 @@ export class NFT2Contract {
    * @param pagination.sort object {field: 'mintedAt' | 'tokenId', order: 'ASC' | 'DESC'}
    * @returns Promise<{ nfts: NFT[]; total: number; }>
    */
-  async getNFTsByCollection(collectionAddress: string, pagination: Pagination) {
+  async getNFTsByCollection(
+    collectionAddress: string,
+    pagination: Pagination,
+    isLite?: boolean
+  ) {
     const address = collectionAddress.toLowerCase();
     let orderBy = 'TOKEN_ID_ASC';
     if (pagination.sort) {
@@ -170,15 +175,19 @@ export class NFT2Contract {
       return {nfts: [], total: 0};
     }
 
-    const collectionInfo = await constructCollectionResponse(
-      this.provider,
-      onchainData.collection
-    );
+    const collectionInfo = isLite
+      ? constructCollectionLiteResponse(onchainData.collection)
+      : await constructCollectionResponse(
+          this.provider,
+          onchainData.collection
+        );
 
     const nfts = await Promise.all(
-      onchainData.nFTs.nodes.map(async nft =>
-        constructNFTResponse(this.provider, nft, collectionInfo)
-      )
+      onchainData.nFTs.nodes.map(async nft => {
+        return isLite
+          ? constructNFTLiteResponse(nft, collectionInfo)
+          : constructNFTResponse(this.provider, nft, collectionInfo);
+      })
     );
 
     return {nfts, total: onchainData.nFTs.totalCount};
@@ -191,7 +200,11 @@ export class NFT2Contract {
    * @param pagination.filter object {isDerivative: false | true} // default false
    * @returns Promise<{ nfts: NFT[]; total: number; }>
    */
-  async getNFTsByOwner(ownerAddress: string, pagination: Pagination) {
+  async getNFTsByOwner(
+    ownerAddress: string,
+    pagination: Pagination,
+    isLite?: boolean
+  ) {
     let orderBy = 'TIMESTAMP_DESC';
     if (pagination.sort) {
       orderBy = `${
@@ -228,6 +241,13 @@ export class NFT2Contract {
 
     if (!onchainData.nFTs.nodes || onchainData.nFTs.totalCount == 0) {
       return {nfts: [], total: 0};
+    }
+
+    if (isLite) {
+      return {
+        nfts: onchainData.nFTs.nodes.map(nft => constructNFTLiteResponse(nft)),
+        total: onchainData.nFTs.totalCount,
+      };
     }
 
     const collectionList = [
@@ -511,47 +531,6 @@ export class NFT2Contract {
    * @returns Promise<{ nfts: NFT[]; total: number; }>
    */
   async getNFTsByOwnerLite(ownerAddress: string, pagination: Pagination) {
-    let orderBy = 'TIMESTAMP_DESC';
-    if (pagination.sort) {
-      orderBy = `${
-        pagination.sort.field === 'tokenId' ? 'TOKEN_ID' : 'TIMESTAMP'
-      }_${pagination.sort.order}`;
-    }
-    const isDerivative = pagination.filter?.isDerivative ? true : false;
-
-    const query = gql`
-      {
-        nFTs(
-          filter: {
-            chainId: {equalTo: ${this.chainId}}
-            owner: {equalToInsensitive: "${ownerAddress}"}
-            isDerived: ${isDerivative ? '{equalTo: true}' : '{isNull: true}'}
-          }
-          first: ${pagination.limit}
-          offset: ${pagination.offset}
-          orderBy: ${orderBy}
-        ) {
-          nodes {
-            ${OnchainNFTQuery}
-          }
-          totalCount
-        }
-      }
-    `;
-    const onchainData: {
-      nFTs: {
-        nodes: Array<OnchainNFT>;
-        totalCount: number;
-      };
-    } = await subqueryService.queryDataOnChain(query, this.chainId);
-
-    if (!onchainData.nFTs.nodes || onchainData.nFTs.totalCount == 0) {
-      return {nfts: [], total: 0};
-    }
-
-    return {
-      nfts: onchainData.nFTs.nodes.map(constructNFTLiteResponse),
-      total: onchainData.nFTs.totalCount,
-    };
+    return this.getNFTsByOwner(ownerAddress, pagination, true);
   }
 }

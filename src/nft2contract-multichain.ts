@@ -10,6 +10,7 @@ import {
 } from './types';
 import {gql} from 'graphql-request';
 import {
+  constructCollectionLiteResponse,
   constructCollectionResponse,
   constructNFTLiteResponse,
   constructNFTResponse,
@@ -60,7 +61,8 @@ export class NFT2ContractMultichain {
   async getCollections(
     pagination: Pagination,
     chainIds?: number[],
-    filter?: string
+    filter?: string,
+    isLite?: boolean
   ) {
     let orderBy = 'TIMESTAMP_DESC';
     if (pagination.sort?.order == 'ASC') {
@@ -101,12 +103,14 @@ export class NFT2ContractMultichain {
     }
 
     const collections = await Promise.all(
-      onchainData.collections.nodes.map(collection =>
-        constructCollectionResponse(
-          this.getProviderForChain(collection.chainId),
-          collection
-        )
-      )
+      onchainData.collections.nodes.map(collection => {
+        return isLite
+          ? constructCollectionLiteResponse(collection)
+          : constructCollectionResponse(
+              this.getProviderForChain(collection.chainId),
+              collection
+            );
+      })
     );
 
     return {collections, total: onchainData.collections.totalCount};
@@ -122,10 +126,11 @@ export class NFT2ContractMultichain {
   async getCollectionsByOwner(
     ownerAddress: string,
     pagination: Pagination,
-    chainIds?: number[]
+    chainIds?: number[],
+    isLite?: boolean
   ) {
     const filter = `owner: {equalToInsensitive: "${ownerAddress}"}`;
-    return this.getCollections(pagination, chainIds, filter);
+    return this.getCollections(pagination, chainIds, filter, isLite);
   }
 
   /**
@@ -155,11 +160,13 @@ export class NFT2ContractMultichain {
   async getNFTsByCollection(
     chainId: number,
     collectionAddress: string,
-    pagination: Pagination
+    pagination: Pagination,
+    isLite?: boolean
   ) {
     return await this.getClientForChain(chainId).getNFTsByCollection(
       collectionAddress,
-      pagination
+      pagination,
+      isLite
     );
   }
 
@@ -174,7 +181,8 @@ export class NFT2ContractMultichain {
   async getNFTsByOwner(
     ownerAddress: string,
     pagination: Pagination,
-    chainIds?: number[]
+    chainIds?: number[],
+    isLite?: boolean
   ) {
     let orderBy = 'TIMESTAMP_DESC';
     if (pagination.sort) {
@@ -213,6 +221,13 @@ export class NFT2ContractMultichain {
 
     if (!onchainData.nFTs.nodes || onchainData.nFTs.totalCount == 0) {
       return {nfts: [], total: 0};
+    }
+
+    if (isLite) {
+      return {
+        nfts: onchainData.nFTs.nodes.map(nft => constructNFTLiteResponse(nft)),
+        total: onchainData.nFTs.totalCount,
+      };
     }
 
     const collectionList = [
@@ -327,6 +342,53 @@ export class NFT2ContractMultichain {
     );
   }
 
+  /*----------------- Lite API ------------------- */
+
+  /**
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'deployedAt', order: 'ASC' | 'DESC'}
+   * @param chainIds List chain id (get all if undefined)
+   * @returns Promise<{ collections: Collection[]; total: number; }>
+   */
+  async getCollectionsLite(pagination: Pagination, chainIds?: number[]) {
+    return this.getCollections(pagination, chainIds, undefined, true);
+  }
+
+  /**
+   * @param ownerAddress owner wallet address
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'deployedAt', order: 'ASC' | 'DESC'}
+   * @param chainIds List chain id (get all if undefined)
+   * @returns Promise<{ collections: Collection[]; total: number; }>
+   */
+  async getCollectionsByOwnerLite(
+    ownerAddress: string,
+    pagination: Pagination,
+    chainIds?: number[]
+  ) {
+    return this.getCollectionsByOwner(ownerAddress, pagination, chainIds, true);
+  }
+
+  /**
+   * @param chainId chain id
+   * @param collectionAddress collection address
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'mintedAt' | 'tokenId', order: 'ASC' | 'DESC'}
+   * @returns Promise<{ nfts: NFT[]; total: number; }>
+   */
+  async getNFTsByCollectionLite(
+    chainId: number,
+    collectionAddress: string,
+    pagination: Pagination
+  ) {
+    return this.getNFTsByCollection(
+      chainId,
+      collectionAddress,
+      pagination,
+      true
+    );
+  }
+
   /**
    * @param ownerAddress owner wallet address
    * @param pagination Pagination {offset, limit, sort, filter}
@@ -339,48 +401,6 @@ export class NFT2ContractMultichain {
     pagination: Pagination,
     chainIds?: number[]
   ) {
-    let orderBy = 'TIMESTAMP_DESC';
-    if (pagination.sort) {
-      orderBy = `${
-        pagination.sort.field === 'tokenId' ? 'TOKEN_ID' : 'TIMESTAMP'
-      }_${pagination.sort.order}`;
-    }
-    const isDerivative = pagination.filter?.isDerivative ? true : false;
-
-    const chainList = chainIds ? chainIds : Object.keys(this.networkChains);
-    const query = gql`
-        {
-          nFTs(
-            filter: {
-              chainId: {in: [${chainList.join(',')}]}
-              owner: {equalToInsensitive: "${ownerAddress}"}
-              isDerived: ${isDerivative ? '{equalTo: true}' : '{isNull: true}'}
-            }
-            first: ${pagination.limit}
-            offset: ${pagination.offset}
-            orderBy: ${orderBy}
-          ) {
-            nodes {
-              ${OnchainNFTQuery}
-            }
-            totalCount
-          }
-        }
-      `;
-    const onchainData: {
-      nFTs: {
-        nodes: Array<OnchainNFT>;
-        totalCount: number;
-      };
-    } = await subqueryService.queryDataOnChain(query, this.networkType);
-
-    if (!onchainData.nFTs.nodes || onchainData.nFTs.totalCount == 0) {
-      return {nfts: [], total: 0};
-    }
-
-    return {
-      nfts: onchainData.nFTs.nodes.map(constructNFTLiteResponse),
-      total: onchainData.nFTs.totalCount,
-    };
+    return this.getNFTsByOwner(ownerAddress, pagination, chainIds, true);
   }
 }
