@@ -10,17 +10,21 @@ import {
 } from './types';
 import {gql} from 'graphql-request';
 import {
+  constructCollectionCachedResponse,
   constructCollectionLiteResponse,
   constructCollectionResponse,
+  constructNFTCachedResponse,
   constructNFTLiteResponse,
   constructNFTResponse,
 } from './utils';
+import {APIService} from './services/api.service';
 
 export class NFT2ContractMultichain {
   networkType: 'mainnet' | 'testnet';
   networkChains: {[key: number]: string};
   providers: {[key: number]: ethers.providers.JsonRpcProvider};
   contractClients: {[key: number]: NFT2Contract};
+  apiService: APIService;
 
   constructor(
     networkConfig: {
@@ -28,12 +32,14 @@ export class NFT2ContractMultichain {
       network: {[key: number]: string};
     },
     providers: {[key: number]: ethers.providers.JsonRpcProvider},
-    contractClients: {[key: number]: NFT2Contract}
+    contractClients: {[key: number]: NFT2Contract},
+    apiService: APIService
   ) {
     this.networkType = networkConfig.key;
     this.networkChains = networkConfig.network;
     this.providers = providers;
     this.contractClients = contractClients;
+    this.apiService = apiService;
   }
 
   getProviderForChain(chainId: number) {
@@ -317,11 +323,13 @@ export class NFT2ContractMultichain {
   async getNFTInfo(
     chainId: number,
     collectionAddress: string,
-    tokenId: string
+    tokenId: string,
+    isLite?: boolean
   ) {
     return await this.getClientForChain(chainId).getNFTInfo(
       collectionAddress,
-      tokenId
+      tokenId,
+      isLite
     );
   }
 
@@ -402,5 +410,147 @@ export class NFT2ContractMultichain {
     chainIds?: number[]
   ) {
     return this.getNFTsByOwner(ownerAddress, pagination, chainIds, true);
+  }
+
+  /*----------------- Cached API ------------------- */
+
+  /**
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'deployedAt', order: 'ASC' | 'DESC'}
+   * @param chainIds List chain id (get all if undefined)
+   * @returns Promise<{ collections: Collection[]; total: number; }>
+   */
+  async getCollectionsFromCached(pagination: Pagination, chainIds?: number[]) {
+    const {items, total} = await this.apiService.getCollections(
+      chainIds ?? Object.keys(this.networkChains).map(item => parseInt(item)),
+      pagination
+    );
+    return {collections: items.map(constructCollectionCachedResponse), total};
+  }
+
+  /**
+   * @param ownerAddress owner wallet address
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'createdAt', order: 'ASC' | 'DESC'}
+   * @param chainIds List chain id (get all if undefined)
+   * @returns Promise<{ collections: Collection[]; total: number; }>
+   */
+  async getCollectionsByOwnerFromCached(
+    ownerAddress: string,
+    pagination: Pagination,
+    chainIds?: number[]
+  ) {
+    const {items, total} = await this.apiService.getCollectionsByOwner(
+      chainIds ?? Object.keys(this.networkChains).map(item => parseInt(item)),
+      ownerAddress,
+      pagination
+    );
+    return {collections: items.map(constructCollectionCachedResponse), total};
+  }
+
+  /**
+   * @param chainId chain id
+   * @param collectionAddress collection address
+   * @returns Promise<Collection>
+   */
+  async getCollectionInfoFromCached(
+    chainId: number,
+    collectionAddress: string
+  ) {
+    const collection = await this.apiService.getCollectionDetail(
+      chainId,
+      collectionAddress
+    );
+    return collection ? constructCollectionCachedResponse(collection) : null;
+  }
+
+  /**
+   * @param chainId chain id
+   * @param collectionAddress collection address
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'mintedAt', order: 'ASC' | 'DESC'}
+   * @returns Promise<{ nfts: NFT[]; total: number; }>
+   */
+  async getNFTsByCollectionFromCached(
+    chainId: number,
+    collectionAddress: string,
+    pagination: Pagination
+  ) {
+    const {items, total} = await this.apiService.getNFTsByCollection(
+      chainId,
+      collectionAddress,
+      pagination
+    );
+    return {nfts: items.map(constructNFTCachedResponse), total};
+  }
+
+  /**
+   * @param ownerAddress owner wallet address
+   * @param pagination Pagination {offset, limit, sort, filter}
+   * @param pagination.sort object {field: 'mintedAt', order: 'ASC' | 'DESC'}
+   * @param pagination.filter object {isDerivative: false | true} // default false
+   * @returns Promise<{ nfts: NFT[]; total: number; }>
+   */
+  async getNFTsByOwnerFromCached(
+    ownerAddress: string,
+    pagination: Pagination,
+    chainIds?: number[]
+  ) {
+    const {items, total} = await this.apiService.getNFTsByOwner(
+      chainIds ?? Object.keys(this.networkChains).map(item => parseInt(item)),
+      ownerAddress,
+      pagination
+    );
+    return {nfts: items.map(constructNFTCachedResponse), total};
+  }
+
+  /**
+   * @param chainId chain id
+   * @param originCollectionAddress collection address of original
+   * @param originTokenId token id of original
+   * @param pagination Pagination {offset, limit, sort}
+   * @param pagination.sort object {field: 'mintedAt', order: 'ASC' | 'DESC'}
+   * @returns Promise<{ nfts: NFT[]; total: number; }>
+   */
+  async getNFTsByOriginalFromCached(
+    chainId: number,
+    originCollectionAddress: string,
+    originTokenId: string,
+    pagination: Pagination
+  ) {
+    const {items, total} = await this.apiService.getNFTsByOriginal(
+      chainId,
+      originCollectionAddress,
+      originTokenId,
+      pagination
+    );
+    return {nfts: items.map(constructNFTCachedResponse), total};
+  }
+
+  /**
+   * @param chainId chain id
+   * @param collectionAddress collection address or derived address
+   * @param tokenId token id or derived token id
+   * @returns Promise<{nft: NFT, derivedAccount: derived account}>
+   */
+  async getNFTInfoFromCached(
+    chainId: number,
+    collectionAddress: string,
+    tokenId: string
+  ) {
+    const {nft} = await this.getNFTInfo(
+      chainId,
+      collectionAddress,
+      tokenId,
+      true
+    );
+    const nftDetail = await this.apiService.getNFTDetail(
+      chainId,
+      nft.original ? nft.original.collectionAddress : collectionAddress,
+      nft.original ? nft.original.tokenId : tokenId,
+      nft.original ? collectionAddress : undefined,
+      nft.original ? tokenId : undefined
+    );
+    return nftDetail ? constructNFTCachedResponse(nftDetail) : null;
   }
 }

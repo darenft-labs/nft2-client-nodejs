@@ -396,7 +396,11 @@ export class NFT2Contract {
    * @param tokenId token id or derived token id
    * @returns Promise<{nft: NFT, derivedAccount: derived account}>
    */
-  async getNFTInfo(collectionAddress: string, tokenId: string) {
+  async getNFTInfo(
+    collectionAddress: string,
+    tokenId: string,
+    isLite?: boolean
+  ) {
     const address = collectionAddress.toLowerCase();
     const nftKey = `${this.chainId}-${address}-${tokenId}`;
 
@@ -414,6 +418,12 @@ export class NFT2Contract {
     if (!nftOnchainData.nFT) {
       throw new Error('NFT not found');
     }
+
+    if (isLite)
+      return {
+        nft: constructNFTLiteResponse(nftOnchainData.nFT),
+        derivedAccount: null,
+      };
 
     const underlyingNFT = nftOnchainData.nFT.underlyingNFT;
     const underlyingNFTKey = `${this.chainId}-${

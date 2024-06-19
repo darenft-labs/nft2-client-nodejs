@@ -1,8 +1,11 @@
 import {ethers} from 'ethers';
 import {
   Collection,
+  CollectionAPI,
+  DappAPI,
   DataRegistry,
   NFT,
+  NFTAPI,
   OnchainCollection,
   OnchainDapp,
   OnchainNFT,
@@ -136,7 +139,9 @@ export const constructNFTLiteResponse = (
   return {
     chainId: nft.chainId,
     collection: {
-      contractAddress: nft.collection,
+      contractAddress: nft.underlyingNFT
+        ? nft.underlyingNFT.collection
+        : nft.collection,
       ...(collection ? collection : {}),
     },
     ownerAddress: nft.owner,
@@ -147,5 +152,82 @@ export const constructNFTLiteResponse = (
       : NFTContractType.Original,
     status: getNFTStatus(nft.isBurned),
     mintedAt: getBlockTime(nft.timestamp),
+    ...(nft.underlyingNFT
+      ? {
+          original: {
+            collectionAddress: nft.underlyingNFT.collection,
+            tokenId: nft.underlyingNFT.tokenId,
+          },
+        }
+      : {}),
   } as NFT;
+};
+
+export const constructCollectionCachedResponse = (
+  collection: CollectionAPI
+) => {
+  return {
+    name: collection.name,
+    symbol: collection.symbol,
+    imageUrl: collection.imageUrl,
+    contractAddress: collection.contractAddress,
+    ownerAddress: collection.ownerAddress,
+    creatorAddress: collection.creatorAddress,
+    chainId: collection.chainId,
+    type: collection.type,
+    deployedAt: collection.deployedAt,
+    totalNfts: collection.totalNfts,
+    totalOwners: collection.totalOwners,
+    kind: collection.kind,
+    defaultRoyalty: collection.defaultRoyalty
+      ? parseFloat(collection.defaultRoyalty)
+      : 0,
+  } as Collection;
+};
+
+export const constructNFTCachedResponse = (nft: NFTAPI) => {
+  return {
+    name: nft.name,
+    description: nft.description,
+    tokenId: nft.tokenId,
+    chainId: nft.chainId,
+    creatorAddress: nft.creatorAddress,
+    ownerAddress: nft.ownerAddress,
+    imageUrl: nft.imageUrl,
+    tokenUri: nft.tokenUriIPFS,
+    tokenUriGateway: nft.tokenUri,
+    type: nft.type,
+    status: nft.status,
+    mintedAt: nft.mintedAt,
+    attributes: nft.attributes,
+    collection: constructCollectionCachedResponse(nft.nftContract),
+    ...(nft.original
+      ? {
+          openAt: nft.openAt,
+          closeAt: nft.closeAt,
+          royalties: nft.royalties ? parseFloat(nft.royalties) : 0,
+          original: {
+            collectionAddress: nft.original.nftContractAddress,
+            tokenId: nft.original.tokenId,
+          },
+          dataRegistry: {providerAddress: nft.nftContractAddress},
+        }
+      : {}),
+  } as NFT;
+};
+
+export const constructDappCachedResponse = (dapp: DappAPI) => {
+  return {
+    name: dapp.name,
+    description: dapp.description,
+    url: dapp.url,
+    chainId: dapp.chainId,
+    providerAddress: dapp.providerAddress,
+    walletAddress: dapp.walletAddress,
+    registryUrl: dapp.registryUrlIPFS,
+    registryUrlGateway: dapp.registryUrl,
+    registeredAt: dapp.registeredAt,
+    schemas: dapp.schemas,
+    collectionSchemas: dapp.collectionSchemas,
+  } as DataRegistry;
 };

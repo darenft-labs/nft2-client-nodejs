@@ -78,13 +78,15 @@ export class NFT2Client {
       this.contractMultichains[item.key] = new NFT2ContractMultichain(
         item as any,
         pick(this.rpcProviders, Object.keys(item.network)),
-        pick(this.contractClients, Object.keys(item.network))
+        pick(this.contractClients, Object.keys(item.network)),
+        this.apiService
       );
 
       this.dataRegistryMultichains[item.key] = new NFT2DataRegistryMultichain(
         item as any,
         pick(this.rpcProviders, Object.keys(item.network)),
-        pick(this.registryClients, Object.keys(item.network))
+        pick(this.registryClients, Object.keys(item.network)),
+        this.apiService
       );
     });
   }

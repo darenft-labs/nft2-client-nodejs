@@ -3,13 +3,19 @@ import {NFT2DataRegistry} from './nft2dataregistry';
 import {OnchainDapp, OnchainDappQuery, Pagination} from './types';
 import {gql} from 'graphql-request';
 import {subqueryService} from './services/subquery.service';
-import {checkIsDerivable, constructDappResponse} from './utils';
+import {
+  checkIsDerivable,
+  constructDappCachedResponse,
+  constructDappResponse,
+} from './utils';
+import {APIService} from './services/api.service';
 
 export class NFT2DataRegistryMultichain {
   networkType: 'mainnet' | 'testnet';
   networkChains: {[key: number]: string};
   providers: {[key: number]: ethers.providers.JsonRpcProvider};
   dataRegistryClients: {[key: number]: NFT2DataRegistry};
+  apiService: APIService;
 
   constructor(
     networkConfig: {
@@ -17,12 +23,14 @@ export class NFT2DataRegistryMultichain {
       network: {[key: number]: string};
     },
     providers: {[key: number]: ethers.providers.JsonRpcProvider},
-    dataRegistryClients: {[key: number]: NFT2DataRegistry}
+    dataRegistryClients: {[key: number]: NFT2DataRegistry},
+    apiService: APIService
   ) {
     this.networkType = networkConfig.key;
     this.networkChains = networkConfig.network;
     this.providers = providers;
     this.dataRegistryClients = dataRegistryClients;
+    this.apiService = apiService;
   }
 
   getProviderForChain(chainId: number) {
@@ -169,5 +177,40 @@ export class NFT2DataRegistryMultichain {
       tokenId,
       providerAddress
     );
+  }
+
+  /*----------------- Cached API ------------------- */
+
+  /**
+   * @param pagination Pagination data
+   * @param pagination.sort object {field: 'registeredAt', order: 'ASC' | 'DESC'}
+   * @param chainIds List chain id (get all if undefined)
+   * @returns Promise<{ datas: DataRegistry[]; total: number; }>
+   */
+  async getDataRegistriesFromCached(
+    pagination: Pagination,
+    chainIds?: number[]
+  ) {
+    const {items, total} = await this.apiService.getDataRegistries(
+      chainIds ?? Object.keys(this.networkChains).map(item => parseInt(item)),
+      pagination
+    );
+    return {datas: items.map(constructDappCachedResponse), total};
+  }
+
+  /**
+   * @param chainId chain id
+   * @param registryAddress data registry address
+   * @returns Promise<DataRegistry>
+   */
+  async getDataRegistryInfoFromCached(
+    chainId: number,
+    registryAddress: string
+  ) {
+    const data = await this.apiService.getDataRegistryInfo(
+      chainId,
+      registryAddress
+    );
+    return data ? constructDappCachedResponse(data) : null;
   }
 }

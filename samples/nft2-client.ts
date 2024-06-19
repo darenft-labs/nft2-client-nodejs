@@ -12,7 +12,7 @@ async function main() {
     console.log('Client init success: ', nft2Client.dataRegistryMultichains);
   });
 
-  await testContract(nft2Client);
+  await testDataRegistry(nft2Client);
   // testMerkleTree();
 }
 
@@ -25,20 +25,33 @@ const testClient = () => {
 
 const testContract = async (nft2Client: NFT2Client) => {
   const bnbContract = nft2Client.getNFT2ContractMultichain('testnet');
-  const nfts = await bnbContract.getNFTsByOwnerLite(
-    '0x66bafFADF182eaD6BBb5971dcdf3852BeC334886',
-    {limit: 10, offset: 0}
+  const nfts = await bnbContract.getNFTInfoFromCached(
+    43113,
+    '0x6dd2fbb992cef092b4691ba786d7a7615ab915f9',
+    '2'
+    // {
+    //   limit: 10,
+    //   offset: 0,
+    //   sort: {field: 'mintedAt', order: 'ASC'},
+    //   filter: {isDerivative: true},
+    // }
+    // [97]
   );
   console.log('nft: ', nfts);
 };
 
 const testDataRegistry = async (nft2Client: NFT2Client) => {
   const dataRegistry = nft2Client.getNFT2DataRegistryMultichain('testnet');
-  const datas = await dataRegistry.getNFTProtocolMetaData(
-    97,
-    '0x8d6638c8b8e460c8bae91be5ee882ca26e3d6200',
-    '1',
-    '0xcde02b7ec5568f718cc5fe0ba0eee4019bbb9eb5'
+  const datas = await dataRegistry.getDataRegistryInfoFromCached(
+    43113,
+    '0x3d7ee7a581710cb2d2eb385b3d61a20d75afe953'
+    // {
+    //   limit: 10,
+    //   offset: 0,
+    //   // sort: {field: 'registeredAt', order: 'ASC'},
+    //   // filter: {isDerivative: true},
+    // }
+    // [97]
   );
   console.log('datas: ', datas);
 };
