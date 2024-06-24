@@ -368,6 +368,60 @@ export class APIService {
     return result?.data ? result.data : null;
   }
 
+  /**
+   * @param chainId id of chain
+   * @param collectionAddress collection address
+   * @param tokenId token id
+   * @returns NFT Dapp metadatas
+   */
+  async getNFTDappMetadata(
+    chainId: number,
+    collectionAddress: string,
+    tokenId: string
+  ): Promise<any> {
+    const result = await this.authClient.request<any>({
+      url: `${this.authClient.url}/nfts/${tokenId}/dapp-metadatas`,
+      method: 'GET',
+      params: {
+        chain_id: chainId,
+        contract_address: collectionAddress,
+      },
+    });
+
+    return result?.data ? result.data : [];
+  }
+
+  /**
+   * @param chainId id of chain
+   * @param collectionAddress collection address
+   * @param tokenId token id
+   * @param providerAddress data registry address
+   * @returns NFT Dynamic data
+   */
+  async getNFTDynamicData(
+    chainId: number,
+    collectionAddress: string,
+    tokenId: string,
+    providerAddress: string
+  ): Promise<any> {
+    const result = await this.authClient.request<any>({
+      url: `${this.authClient.url}/nfts/${tokenId}/protocol-metadatas`,
+      method: 'GET',
+      params: {
+        chain_id: chainId,
+        contract_address: collectionAddress,
+        provider_address: providerAddress,
+      },
+    });
+
+    return result?.data
+      ? result.data
+      : {
+          metadatas: [],
+          dynamicDatas: null,
+        };
+  }
+
   convertPaginationParams(pagination: Pagination) {
     return {
       size: pagination.limit,

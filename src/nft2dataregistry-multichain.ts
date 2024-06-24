@@ -213,4 +213,43 @@ export class NFT2DataRegistryMultichain {
     );
     return data ? constructDappCachedResponse(data) : null;
   }
+
+  /**
+   * @param chainId chain id
+   * @param collectionAddress collection address
+   * @param tokenId token id
+   * @returns Promise<Array NFT metadatas on dapp>
+   */
+  async getNFTMetaDataFromCached(
+    chainId: number,
+    collectionAddress: string,
+    tokenId: string
+  ) {
+    return await this.apiService.getNFTDappMetadata(
+      chainId,
+      collectionAddress,
+      tokenId
+    );
+  }
+
+  /**
+   * @param chainId chain id
+   * @param collectionAddress collection address
+   * @param tokenId token id
+   * @param providerAddress data registry address
+   * @returns Promise<protocol metadatas>
+   */
+  async getNFTProtocolMetaDataFromCached(
+    chainId: number,
+    collectionAddress: string,
+    tokenId: string,
+    providerAddress: string
+  ) {
+    return await this.apiService.getNFTDynamicData(
+      chainId,
+      collectionAddress,
+      tokenId,
+      providerAddress
+    );
+  }
 }

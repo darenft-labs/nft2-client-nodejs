@@ -42,9 +42,11 @@ const testContract = async (nft2Client: NFT2Client) => {
 
 const testDataRegistry = async (nft2Client: NFT2Client) => {
   const dataRegistry = nft2Client.getNFT2DataRegistryMultichain('testnet');
-  const datas = await dataRegistry.getDataRegistryInfoFromCached(
+  const datas = await dataRegistry.getNFTProtocolMetaDataFromCached(
     43113,
-    '0x3d7ee7a581710cb2d2eb385b3d61a20d75afe953'
+    '0x4022a9c81eb4835f602669de7f8b76f9f3a3650f',
+    '0',
+    '0xbdea4df162f786cf2fb17f4893431cabf27df10b'
     // {
     //   limit: 10,
     //   offset: 0,
